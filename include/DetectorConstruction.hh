@@ -118,15 +118,17 @@ private:
 	G4ThreeVector      phantomBoxMin, phantomBoxMax;
 	G4int              nOfTetrahedrons;
 
+
+	// Material
 	G4Material* vacuum;
 	G4Material* water;
 	G4Material* lead;
-
-	G4LogicalVolume* lv_pic;
-	G4VPhysicalVolume* pv_pic;
+	G4Material* carbonfiber;
 
 	// Radiologist
 	G4ThreeVector doctor_translation;
+	G4LogicalVolume* lv_doctor;
+	G4VPhysicalVolume* pv_doctor;
 
 	// Operating Table
 	G4ThreeVector table_ocr;

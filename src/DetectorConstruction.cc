@@ -31,28 +31,31 @@ using namespace std;
 
 DetectorConstruction::DetectorConstruction(TETModelImport* _tetData)
 :worldLogical(0) ,worldPhysical(0), container_logic(0), container_phy(0),
- tetData(_tetData), lv_pic(0), pv_pic(0)
+ tetData(_tetData), lv_doctor(0), pv_doctor(0)
 {
 	// Material
 	vacuum = G4NistManager::Instance()->FindOrBuildMaterial("G4_Galactic");
 	water = G4NistManager::Instance()->FindOrBuildMaterial("G4_WATER");
 	lead = G4NistManager::Instance()->FindOrBuildMaterial("G4_Pb");
+	carbonfiber = G4NistManager::Instance()->FindOrBuildMaterial("G4_Galactic");
 
 	// Radiologist
 	G4int frameNo = 130;
 	tetData->Deform(frameNo);
 	doctor_translation = tetData->GetRootPosition(frameNo) * cm;
+
+	cout << doctor_translation << endl;
 	phantomSize        = tetData -> GetPhantomSize();
 	phantomBoxMin      = tetData -> GetPhantomBoxMin();
 	phantomBoxMax      = tetData -> GetPhantomBoxMax();
 	nOfTetrahedrons    = tetData -> GetNumTetrahedron();
 
 
-	// Operating Table (Patient + Glass)
+	// Operating Table (w/ patient, curtain)
 //	table_ocr = G4ThreeVector(-280,-960,-10); // Initial position
-	table_ocr = G4ThreeVector(-80,20-10);     // Operating position
+	table_ocr = G4ThreeVector(-80*mm, 20*mm -10*mm);     // Operating position
 	table_pivot_angle = 0 * deg;              // Z axis rotation
-	table_rotation_center = G4ThreeVector(1200, 0, 820);
+	table_rotation_center = G4ThreeVector(1200*mm, 0*mm, 820*mm);
 	table_rotation_matrix = new G4RotationMatrix;
 	table_rotation_matrix->rotateZ(table_pivot_angle);
 	table_rotation_matrix2 = new G4RotationMatrix;
@@ -60,7 +63,7 @@ DetectorConstruction::DetectorConstruction(TETModelImport* _tetData)
 	table_translation = (*table_rotation_matrix) * table_ocr + table_rotation_center;
 
 	// Pb glass
-	glass_translation = G4ThreeVector(950, 500, 1500);
+	glass_translation = G4ThreeVector(950*mm, 500*mm, 1500*mm);
 	AngleAxisd aa(80*deg, Vector3d::UnitX());
 	Quaterniond glass_quaternion(aa);
 	MatrixXd mat = glass_quaternion.matrix();
@@ -71,7 +74,7 @@ DetectorConstruction::DetectorConstruction(TETModelImport* _tetData)
 
 
 	// C-arm (visualization)
-	carm_isocenter = G4ThreeVector(1120,600,1135);
+	carm_isocenter = G4ThreeVector(1120 * mm, 600 * mm,1135 * mm);
 	carm_primary   = 20 * deg;   // +LAO, -RAO
 	carm_secondary = 20 * deg;   // +CAU, -CRA
 }
@@ -132,7 +135,7 @@ void DetectorConstruction::SetupWorldGeometry()
 	G4double dimY = max.getY()>-min.getY()? max.getY():-min.getY();
 	G4double dimZ = max.getZ()>-min.getZ()? max.getZ():-min.getZ();
 
-	doctor_translation.setZ(doctor_translation.getZ() + (dimZ - doctor_translation.getZ()) + floorZ);
+//	doctor_translation.setZ(doctor_translation.getZ() + (dimZ - doctor_translation.getZ()) + floorZ);
 
 	G4Box* containerSolid = new G4Box("phantomBox", dimX + 1.*cm,
 										            dimY + 1.*cm,
@@ -141,8 +144,8 @@ void DetectorConstruction::SetupWorldGeometry()
 	container_logic = new G4LogicalVolume(containerSolid, vacuum, "phantomLogical");
 	container_phy = new G4PVPlacement(0, doctor_translation, container_logic, "PhantomPhysical", worldLogical, false, 0);
 
-	G4VisAttributes* container_vis = new G4VisAttributes(G4Colour(1.0,1.0,1.0,0.0));
-	container_vis->SetForceWireframe(false);
+	G4VisAttributes* container_vis = new G4VisAttributes(G4Colour(1.0,1.0,1.0,1.0));
+	container_vis->SetForceWireframe(true);
 	container_logic->SetVisAttributes(container_vis);
 	container_logic->SetOptimisation(TRUE);
 	container_logic->SetSmartless( 0.5 ); // for optimization (default=2)
@@ -150,9 +153,9 @@ void DetectorConstruction::SetupWorldGeometry()
 
 void DetectorConstruction::ConstructPhantom()
 {
-    lv_pic = new G4LogicalVolume(tetData->GetPicTess(), water, "lv_pic");
-	pv_pic = new G4PVPlacement(0, G4ThreeVector(), lv_pic, "pv_pic", container_logic, false, 0);
-	lv_pic->SetVisAttributes(new G4VisAttributes(G4Colour(1.000000, 0.752941, 0.627451)));
+    lv_doctor = new G4LogicalVolume(tetData->GetPicTess(), water, "lv_doctor");
+	pv_doctor = new G4PVPlacement(0, G4ThreeVector(), lv_doctor, "pv_doctor", container_logic, false, 0);
+	lv_doctor->SetVisAttributes(new G4VisAttributes(G4Colour(1.000000, 0.752941, 0.627451)));
 }
 
 void DetectorConstruction::ConstructSDandField()
@@ -176,45 +179,22 @@ void DetectorConstruction::PrintPhantomInformation()
 void DetectorConstruction::ConstructOperatingTable()
 {
 	// Operating table
-	G4Box* table = new G4Box("sol_table", 250, 1600, 65);
+	G4Box* table = new G4Box("sol_table", 250*mm, 1600*mm, 65*mm);
 	G4LogicalVolume* lv_table = new G4LogicalVolume(table, vacuum, "lv_table");
 	new G4PVPlacement(table_rotation_matrix2, table_translation, lv_table, "pv_table", worldLogical, false, 0);
 	lv_table->SetVisAttributes( new G4VisAttributes(G4Colour(1.,1.,0.)) );
 
 	// Pb Curtain - 35 x 50 cm lead apron, lead equivalence 0.5 mm Pb
-	G4ThreeVector relative_position_to_table = (*table_rotation_matrix) * G4ThreeVector(-250-10, 1600-300-500, -300);
+	G4Box* curtain = new G4Box("sol_curtain", 0.25*mm, 175*mm, 250*mm);
+	G4ThreeVector curtain_margin(20*mm,500*mm,50*mm);
+	G4ThreeVector relative_position_to_table
+		= (*table_rotation_matrix) *
+		( G4ThreeVector(-table->GetXHalfLength(), table->GetYHalfLength()-curtain->GetYHalfLength(), -curtain->GetZHalfLength())
+						+ curtain_margin);
 	G4ThreeVector curtain_translation = table_translation + relative_position_to_table;
-	G4Box* curtain = new G4Box("sol_curtain", 0.25, 175, 250);
 	G4LogicalVolume* lv_curtain = new G4LogicalVolume(curtain, lead, "lv_curtain");
 	new G4PVPlacement(table_rotation_matrix2, curtain_translation, lv_curtain, "pv_curtain", worldLogical, false, 0);
 	lv_curtain->SetVisAttributes( new G4VisAttributes(G4Colour(0.,0.,1.,0.8)) );
-
-
-	//	G4Sphere* test = new G4Sphere("solid", 0, 20,0*deg,360*deg,0*deg,360*deg);
-	//	G4LogicalVolume* lv_test = new G4LogicalVolume(test, vacuum, "lv_table");
-	//	G4VPhysicalVolume* pv_test = new G4PVPlacement(0, table_rotation_center, lv_test, "pv_table", worldLogical, false, 0);
-	//	lv_test->SetVisAttributes( new G4VisAttributes(G4Colour(1.,0.,0.)) );
-	//
-	//	G4Sphere* test2 = new G4Sphere("solid", 0, 20,0*deg,360*deg,0*deg,360*deg);
-	//	G4LogicalVolume* lv_test2 = new G4LogicalVolume(test2, vacuum, "lv_table");
-	//	G4VPhysicalVolume* pv_test2 = new G4PVPlacement(0, table_rotation_center + table_ocr, lv_test2, "pv_table", worldLogical, false, 0);
-	//	lv_test2->SetVisAttributes( new G4VisAttributes(G4Colour(0.,1.,0.)) );
-	//
-	//	G4Sphere* test4 = new G4Sphere("solid", 0, 20,0*deg,360*deg,0*deg,360*deg);
-	//	G4LogicalVolume* lv_test4 = new G4LogicalVolume(test4, vacuum, "lv_table");
-	//	G4VPhysicalVolume* pv_test4 = new G4PVPlacement(0, table_translation, lv_test4, "pv_table", worldLogical, false, 0);
-	//	lv_test4->SetVisAttributes( new G4VisAttributes(G4Colour(1.,0.,1.)) );
-	//
-	//
-	//	G4Sphere* test3 = new G4Sphere("solid", 0, 50,0*deg,360*deg,0*deg,360*deg);
-	//	G4LogicalVolume* lv_test3 = new G4LogicalVolume(test3, vacuum, "lv_table");
-	//	G4VPhysicalVolume* pv_test3 = new G4PVPlacement(0, (*table_rotation_matrix) * table_ocr, lv_test3, "pv_table", worldLogical, false, 0);
-	//	lv_test3->SetVisAttributes( new G4VisAttributes(G4Colour(0.,0.,1.)) );
-	//
-	//	G4Sphere* test5 = new G4Sphere("solid", 0, 50,0*deg,360*deg,0*deg,360*deg);
-	//	G4LogicalVolume* lv_test5 = new G4LogicalVolume(test5, vacuum, "lv_table");
-	//	G4VPhysicalVolume* pv_test5 = new G4PVPlacement(0, table_ocr, lv_test5, "pv_table", worldLogical, false, 0);
-	//	lv_test5->SetVisAttributes( new G4VisAttributes(G4Colour(0.,0.,1.)) );
 }
 
 void DetectorConstruction::ConstructPatient()
@@ -270,7 +250,10 @@ void DetectorConstruction::ConstructPatient()
 	pTess->SetSolidClosed(true);
 
 	// Patient
-	G4ThreeVector relative_position_to_table = (*table_rotation_matrix) * G4ThreeVector(0,300,65-minZ+1*cm);
+	G4ThreeVector relative_position_to_table
+	= (*table_rotation_matrix) * G4ThreeVector(0,
+											   300*mm,  // move up patient 300 mm on the table
+											   65*mm-minZ+1*cm); // table->halfZLength() - minZ patient + margin 1 cm
 	G4ThreeVector patient_translation = table_translation + relative_position_to_table;
 	G4LogicalVolume* lv_patient = new G4LogicalVolume(pTess, water, "lv_patient");
 	new G4PVPlacement(table_rotation_matrix2, patient_translation, lv_patient, "pv_patient", worldLogical, false, 0);
@@ -339,7 +322,7 @@ void DetectorConstruction::ConstructCarm()
 void DetectorConstruction::ConstructPbGlass()
 {
 	// Pb Glass - 40 x 50 cm tiltable lead acrylic shield, lead equivalence 0.5 mm Pb
-	G4Box* glass = new G4Box("sol_glass", 200, 250, 0.25);
+	G4Box* glass = new G4Box("sol_glass", 200*mm, 250*mm, 0.25*mm);
 	G4LogicalVolume* lv_glass = new G4LogicalVolume(glass, lead, "lv_glass");
 	new G4PVPlacement(glass_rotation_matrix, glass_translation, lv_glass, "pv_glass", worldLogical, false, 0);
 	lv_glass->SetVisAttributes( new G4VisAttributes(G4Colour(0.,1.,0.,0.8)) );
