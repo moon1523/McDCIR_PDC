@@ -166,6 +166,8 @@ void DetectorConstruction::ConstructSDandField()
 void DetectorConstruction::PrintPhantomInformation()
 {
 	// print brief information on the imported phantom
+	G4ThreeVector size = tetData->GetPhantomBoxMax() - ;
+
 	G4cout<< G4endl;
 	G4cout.precision(3);
 	G4cout<<"   Phantom name               "<<tetData->GetPhantomName() << " TET phantom"<<G4endl;
@@ -174,7 +176,6 @@ void DetectorConstruction::PrintPhantomInformation()
 	G4cout<<"   Phantom box position (max) "<<phantomBoxMax.x()<<" mm, "<<phantomBoxMax.y()<<" mm, "<<phantomBoxMax.z()<<" mm"<<G4endl;
 	G4cout<<"   Number of tetrahedrons     "<<nOfTetrahedrons<<G4endl<<G4endl;
 }
-
 
 void DetectorConstruction::ConstructOperatingTable()
 {

@@ -8,9 +8,9 @@ PhantomAnimator::PhantomAnimator(string prefix)
     cout << "Read " + prefix + ".tgf" << endl;
     igl::readTGF(prefix + ".tgf", C, BE);
     ReadTetMesh(prefix);
-    igl::readDMAT(prefix + ".W", W);
-    igl::readDMAT(prefix + ".Wj", Wj);
-    
+    if (!igl::readDMAT(prefix + ".W", W) || !igl::readDMAT(prefix + ".Wj", Wj))
+        PreparePhantom(prefix);
+
     double epsilon(1e-2);
     for (int i = 0; i < W.rows(); i++)
     {
@@ -27,7 +27,6 @@ PhantomAnimator::PhantomAnimator(string prefix)
             iter.second /= sum;
         cleanWeights.push_back(vertexWeight);
     }
-
 
     // ReadFiles(prefix);
     ReadProfileData("../phantoms/profile.txt");
@@ -105,16 +104,16 @@ void PhantomAnimator::PreparePhantom(string prefix) //there should be prefix.ply
         exit(1);
     igl::normalize_row_sums(W, W);
 
-    cout<<"calulate barycentric coodinates"<<endl;
+    cout << "calulate barycentric coodinates" << endl;
     auto baryMap = GenerateBarycentricCoord(VT, TT, V);
     bary = GenerateBarySparse(baryMap, VT.rows());
 
-    W = bary*W;
-    Wj = bary*Wj;
-    cout<<"write "+prefix+".W"<<endl;
-    igl::writeDMAT(prefix+".W", W, false);
-    cout<<"write "+prefix+".Wj"<<endl;
-    igl::writeDMAT(prefix+".Wj", Wj, false);
+    W = bary * W;
+    Wj = bary * Wj;
+    cout << "write " + prefix + ".W" << endl;
+    igl::writeDMAT(prefix + ".W", W, false);
+    cout << "write " + prefix + ".Wj" << endl;
+    igl::writeDMAT(prefix + ".Wj", Wj, false);
 }
 
 // bool PhantomAnimator::ReadFiles(string prefix)
@@ -352,42 +351,27 @@ string PhantomAnimator::CalibrateTo(string name)
     cout << Wj.rows() << "*" << Wj.cols() << endl;
     cout << jointTrans.rows() << "*" << jointTrans.cols() << endl;
     V_calib = V + Wj * jointTrans.block(0, 0, C.rows() - 1, 3);
+    U = V_calib;
     //MatrixXd jt = jointTrans.block(0,0,C.rows()-1,3);
 
     return ss.str();
 }
 
-void PhantomAnimator::Animate(RotationList vQ, const MatrixXd &C_disp, MatrixXd &C_new, bool calibChk)
+void PhantomAnimator::Animate(RotationList vQ, Vector3d root)
 {
     vector<Vector3d> vT;
 
-    if (calibChk)
-    {
-        C_new = C_calib;
-        C_new.row(0) = C_disp.row(0); //set root
+    MatrixXd C_new = C_calib;
+    C_new.row(0) = root; //set root
 
-        for (int i = 0; i < BE.rows(); i++)
-        {
-            Affine3d a;
-            a = Translation3d(Vector3d(C_new.row(BE(i, 0)).transpose())) * vQ[i].matrix() * Translation3d(Vector3d(-C_calib.row(BE(i, 0)).transpose()));
-            vT.push_back(a.translation());
-            C_new.row(BE(i, 1)) = a * Vector3d(C_new.row(BE(i, 1)));
-        }
-        myDqs(V_calib, cleanWeights, vQ, vT, U);
-    }
-    else
+    for (int i = 0; i < BE.rows(); i++)
     {
-        C_new = C;
-        C_new.row(0) = C_disp.row(0); //set root
-        for (int i = 0; i < BE.rows(); i++)
-        {
-            Affine3d a;
-            a = Translation3d(Vector3d(C_new.row(BE(i, 0)).transpose())) * vQ[i].matrix() * Translation3d(Vector3d(-C.row(BE(i, 0)).transpose()));
-            vT.push_back(a.translation());
-            C_new.row(BE(i, 1)) = a * Vector3d(C_new.row(BE(i, 1)));
-        }
-        myDqs(V, cleanWeights, vQ, vT, U);
+        Affine3d a;
+        a = Translation3d(Vector3d(C_new.row(BE(i, 0)).transpose())) * vQ[i].matrix() * Translation3d(Vector3d(-C_calib.row(BE(i, 0)).transpose()));
+        vT.push_back(a.translation());
+        C_new.row(BE(i, 1)) = a * Vector3d(C_new.row(BE(i, 1)));
     }
+    myDqs(V_calib, cleanWeights, vQ, vT, U);
 }
 
 void PhantomAnimator::Animate(RotationList vQ, MatrixXd &V_new)

@@ -45,7 +45,7 @@ public:
     // bool ReadFiles(string prefix);
     bool Initialize();
     string CalibrateTo(string name);
-    void Animate(RotationList vQ, const MatrixXd &C_disp, MatrixXd &C_new, bool calibChk = true);
+    void Animate(RotationList vQ, Vector3d root);
     void Animate(RotationList vQ, MatrixXd &V_new);
 
     void GetMeshes(MatrixXd &_V, MatrixXi &_F, MatrixXd &_C, MatrixXi &_BE){
@@ -55,6 +55,7 @@ public:
     MatrixXd GetV_calib(){ return V_calib; }
     MatrixXd GetU(){ return U; }
     MatrixXi GetF(){ return F; }
+    MatrixXi GetT(){ return T; }
     MatrixXd GetC(){ return C; }
     MatrixXd GetC_calib(){ return C_calib; }
     MatrixXi GetBE(){ return BE; }

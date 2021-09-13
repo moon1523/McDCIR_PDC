@@ -114,11 +114,6 @@ private:
 
 	TETModelImport*    tetData;
 
-	G4ThreeVector      phantomSize;
-	G4ThreeVector      phantomBoxMin, phantomBoxMax;
-	G4int              nOfTetrahedrons;
-
-
 	// Material
 	G4Material* vacuum;
 	G4Material* water;
