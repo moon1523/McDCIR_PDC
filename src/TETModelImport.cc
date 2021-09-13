@@ -27,7 +27,7 @@
 
 #include "TETModelImport.hh"
 
-TETModelImport::TETModelImport(G4String _phantomName, G4UIExecutive* ui)
+TETModelImport::TETModelImport(G4String _phantomName)
 :doseOrganized(false)
 {
 	// set phantom name
@@ -37,19 +37,15 @@ TETModelImport::TETModelImport(G4String _phantomName, G4UIExecutive* ui)
 	G4cout << "\t" << phantomName << " was implemented in this CODE!!   "<< G4endl;
 	G4cout << "================================================================================"<<G4endl;
 
-	G4String eleFile      =  phantomName + ".ele";
-	G4String nodeFile     =  phantomName + ".node";
 	G4String materialFile =  phantomName + ".material";
 	G4String doseFile     =  phantomName + ".dose";
 	G4String boneFile     =  phantomName + ".RBMnBS";
 	G4String drfFile      =  phantomName + ".DRF";
-	G4String mtlFile      =  phantomName + ".mtl";
 
 	tess = 0;
 	animator = new PhantomAnimator(phantomName);
 	animator->Initialize();
 	animator->CalibrateTo("S_Moon");
-
 
 	ReadFrameRecord(); // will be revised to use SQL server.
 }

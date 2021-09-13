@@ -70,7 +70,7 @@ typedef std::tuple<G4int, G4int, G4int> IJK;
 class TETModelImport
 {
 public:
-	TETModelImport(G4String phantomName, G4UIExecutive* ui);
+	TETModelImport(G4String phantomName);
     virtual ~TETModelImport();
 
 	// get methods

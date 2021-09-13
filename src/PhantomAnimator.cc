@@ -7,28 +7,6 @@ PhantomAnimator::PhantomAnimator(string prefix)
 	cout << "Initialize the phantom animation data" << endl;
     ReadFiles(prefix);
     ReadProfileData("../phantoms/profile.txt");
-    boneName.push_back("Center | Pelvis      - Spine_Naval");
-    boneName.push_back("Left   | Spine_Naval - Spine_Chest");
-    boneName.push_back("Left   | Spine_Chest - Clavicle   ");
-    boneName.push_back("Left   | Clavicle    - Shoulder   ");
-    boneName.push_back("Left   | Shoulder    - Elbow      ");
-    boneName.push_back("Left   | Elbow       - Wrist      ");
-    boneName.push_back("Left   | Wrist       - Hand       ");
-    boneName.push_back("Center | Spine_Chest - Neck       ");
-    boneName.push_back("Center | Neck        - Head       ");
-    boneName.push_back("Right  | Spine_Chest - Clavicle   ");
-    boneName.push_back("Right  | Clavicle    - Shoulder   ");
-	boneName.push_back("Right  | Shoulder    - Elbow      ");
-	boneName.push_back("Right  | Elbow       - Wrist      ");
-	boneName.push_back("Right  | Wrist       - Hand       ");
-	boneName.push_back("Left   | Pelvis      - Hip        ");
-	boneName.push_back("Left   | Hip         - Knee       ");
-	boneName.push_back("Left   | Knee        - Ankle      ");
-	boneName.push_back("Left   | Ankle       - Foot       ");
-	boneName.push_back("Right  | Pelvis      - Hip        ");
-	boneName.push_back("Right  | Hip         - Knee       ");
-	boneName.push_back("Right  | Knee        - Ankle      ");
-	boneName.push_back("Right  | Ankle       - Foot       ");
 }
 
 bool PhantomAnimator::ReadFiles(string prefix)
@@ -296,12 +274,12 @@ string PhantomAnimator::CalibrateTo(string name)
         	// Bone Tip: Head, Hands, Feets
             calibLengths[i] = lengths[i];
             jointTrans.row(BE(i, 1)) = jointTrans.row(BE(P(i), 1));
-            cout << boneName[i] <<", id" << setw(3) << i << " = " << lengths[i] << endl;
+            cout << setw(3) << i << " = " << lengths[i] << endl;
             continue;
         }
         // Bone Scaling
-        double ratio = calibLengths[i] / lengths[i]; // kinect measuring / tgf based phantom measuring
-        cout << boneName[i] <<", id" << setw(3) << i << " = " << lengths[i] <<
+        double ratio = calibLengths[i] / lengths[i]; // kinedct measuring / tgf based phantom measuring
+        cout << setw(3) << i << " = " << lengths[i] <<
         		" -> " << calibLengths[i] << " (" << ratio * 100 << " %)" << endl;
         ss << i << " : " << ratio * 100 << " %" << endl;
 

@@ -96,9 +96,6 @@ private:
 
     //tmp
     map<int, double> lengths;
-
-    // name
-    vector<string> boneName;
 };
 
 #endif
