@@ -40,7 +40,9 @@ public:
     PhantomAnimator(string prefix);
     ~PhantomAnimator();
 
-    bool ReadFiles(string prefix);
+    void ReadTetMesh(string prefix);
+    void PreparePhantom(string prefix);
+    // bool ReadFiles(string prefix);
     bool Initialize();
     string CalibrateTo(string name);
     void Animate(RotationList vQ, const MatrixXd &C_disp, MatrixXd &C_new, bool calibChk = true);
@@ -93,6 +95,7 @@ private:
     // vector<int> eye2ply;
     RotationList alignRot;
     vector<map<int, double>> cleanWeights;
+    SparseMatrix<double> bary;
 
     //tmp
     map<int, double> lengths;

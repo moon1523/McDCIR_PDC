@@ -63,7 +63,7 @@ int main(int argc, char** argv)
 	G4Random::setTheSeed(time(0));
 
 	// Import phantom
-	TETModelImport* tetData = new TETModelImport(phantomName, ui);
+	TETModelImport* tetData = new TETModelImport(phantomName);
 
 	// Set mandatory initialization classes
 	runManager->SetUserInitialization(new DetectorConstruction(tetData));
