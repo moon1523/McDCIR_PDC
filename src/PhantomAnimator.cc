@@ -417,7 +417,6 @@ bool PhantomAnimator::ReadProfileData(string fileName)
         profileIDs[name] = i;
         for (int j = 0; j < 17; j++)
         {
-            double d;
             ss1 >> d;
             jointLengths[i][boneIDs[j]] = d;
         }

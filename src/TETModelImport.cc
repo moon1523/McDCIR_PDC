@@ -86,7 +86,7 @@ void TETModelImport::Deform(int frameNo)
 	G4double xPos, yPos, zPos;
 	G4double xMin(DBL_MAX), yMin(DBL_MAX), zMin(DBL_MAX);
 	G4double xMax(DBL_MIN), yMax(DBL_MIN), zMax(DBL_MIN);
-	for (size_t i=0; i<U.rows(); i++)
+	for (int i=0; i<U.rows(); i++)
 	{
 		xPos = ( U(i,0) - trans.getX() ) * cm;
 		yPos = ( U(i,1) - trans.getY() ) * cm;
@@ -107,7 +107,7 @@ void TETModelImport::Deform(int frameNo)
 
 	MatrixXi F = animator->GetF();
 	vector<Vector3i> faceVec;
-	for (size_t i=0; i<F.rows(); i++)
+	for (int i=0; i<F.rows(); i++)
 	{
 		G4int a = F(i,0);
 		G4int b = F(i,1);
