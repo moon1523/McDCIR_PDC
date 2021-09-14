@@ -39,24 +39,13 @@ DetectorConstruction::DetectorConstruction(TETModelImport* _tetData)
 	lead = G4NistManager::Instance()->FindOrBuildMaterial("G4_Pb");
 	carbonfiber = G4NistManager::Instance()->FindOrBuildMaterial("G4_Galactic");
 
-	// Radiologist
-	G4int frameNo = 130;
-	tetData->Deform(frameNo);
-	doctor_translation = tetData->GetRootPosition(frameNo) * cm;
-
-	cout << doctor_translation << endl;
-	phantomSize        = tetData -> GetPhantomSize();
-	phantomBoxMin      = tetData -> GetPhantomBoxMin();
-	phantomBoxMax      = tetData -> GetPhantomBoxMax();
-	nOfTetrahedrons    = tetData -> GetNumTetrahedron();
-
-
 	// Operating Table (w/ patient, curtain)
 //	table_ocr = G4ThreeVector(-280,-960,-10); // Initial position
 	table_ocr = G4ThreeVector(-80*mm, 20*mm -10*mm);     // Operating position
 	table_pivot_angle = 0 * deg;              // Z axis rotation
 	table_rotation_center = G4ThreeVector(1200*mm, 0*mm, 820*mm);
 	table_rotation_matrix = new G4RotationMatrix;
+    virtual G4bool IsRegularStructure() const = 0;
 	table_rotation_matrix->rotateZ(table_pivot_angle);
 	table_rotation_matrix2 = new G4RotationMatrix;
 	table_rotation_matrix2->rotateZ(-table_pivot_angle); // to rotate solid
@@ -166,15 +155,15 @@ void DetectorConstruction::ConstructSDandField()
 void DetectorConstruction::PrintPhantomInformation()
 {
 	// print brief information on the imported phantom
-	G4ThreeVector size = tetData->GetPhantomBoxMax() - ;
+	G4ThreeVector size = tetData->GetPhantomBoxMax() - tetData->GetPhantomBoxMin();
 
 	G4cout<< G4endl;
 	G4cout.precision(3);
 	G4cout<<"   Phantom name               "<<tetData->GetPhantomName() << " TET phantom"<<G4endl;
-	G4cout<<"   Phantom size               "<<phantomSize.x()<<" * "<<phantomSize.y()<<" * "<<phantomSize.z()<<" mm3"<<G4endl;
-	G4cout<<"   Phantom box position (min) "<<phantomBoxMin.x()<<" mm, "<<phantomBoxMin.y()<<" mm, "<<phantomBoxMin.z()<<" mm"<<G4endl;
-	G4cout<<"   Phantom box position (max) "<<phantomBoxMax.x()<<" mm, "<<phantomBoxMax.y()<<" mm, "<<phantomBoxMax.z()<<" mm"<<G4endl;
-	G4cout<<"   Number of tetrahedrons     "<<nOfTetrahedrons<<G4endl<<G4endl;
+	G4cout<<"   Phantom size               "<<size.x()<<" * "<<size.y()<<" * "<<size.z()<<" mm3"<<G4endl;
+	G4cout<<"   Phantom box position (min) "<<tetData->GetPhantomBoxMin().x()<<" mm, "<<tetData->GetPhantomBoxMin().y()<<" mm, "<<tetData->GetPhantomBoxMin().z()<<" mm"<<G4endl;
+	G4cout<<"   Phantom box position (max) "<<tetData->GetPhantomBoxMax().x()<<" mm, "<<tetData->GetPhantomBoxMax().y()<<" mm, "<<tetData->GetPhantomBoxMax().z()<<" mm"<<G4endl;
+	G4cout<<"   Number of tetrahedrons     "<<tetData->GetNumTetrahedron()<<G4endl<<G4endl;
 }
 
 void DetectorConstruction::ConstructOperatingTable()
@@ -325,7 +314,8 @@ void DetectorConstruction::ConstructPbGlass()
 	// Pb Glass - 40 x 50 cm tiltable lead acrylic shield, lead equivalence 0.5 mm Pb
 	G4Box* glass = new G4Box("sol_glass", 200*mm, 250*mm, 0.25*mm);
 	G4LogicalVolume* lv_glass = new G4LogicalVolume(glass, lead, "lv_glass");
-	new G4PVPlacement(glass_rotation_matrix, glass_translation, lv_glass, "pv_glass", worldLogical, false, 0);
+	pv_glass  = new G4PVPlacement(glass_rotation_matrix, glass_translation, lv_glass, "pv_glass", worldLogical, false, 0);
+	pv_glass->SetTranslation
 	lv_glass->SetVisAttributes( new G4VisAttributes(G4Colour(0.,1.,0.,0.8)) );
 }
 
