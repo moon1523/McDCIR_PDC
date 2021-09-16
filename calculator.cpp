@@ -63,14 +63,14 @@ int main(int argc, char** argv)
 	G4Random::setTheSeed(time(0));
 
 	// Import phantom
-	TETModelImport* tetData = new TETModelImport(phantomName);
+	// TETModelImport* tetData = new TETModelImport(phantomName);
 
 	// Set mandatory initialization classes
-	runManager->SetUserInitialization(new DetectorConstruction(tetData));
+	runManager->SetUserInitialization(new DetectorConstruction());
 	G4VModularPhysicsList* physicsList = new FTFP_BERT;
 	physicsList->RegisterPhysics(new G4StepLimiterPhysics());
 	runManager->SetUserInitialization(physicsList);
-	runManager->SetUserInitialization(new ActionInitialization(tetData, output, initTimer));
+	runManager->SetUserInitialization(new ActionInitialization(0, output, initTimer));
 
 	// Initialize visualization
 	G4VisManager* visManager = new G4VisExecutive("Quiet");
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
 	}
 	else {
 		// interactive mode
-		UImanager->ApplyCommand("/control/execute ../init_vis.mac");
+		UImanager->ApplyCommand("/control/execute init_vis.mac");
 		ui->SessionStart();
 		delete ui;
 	}

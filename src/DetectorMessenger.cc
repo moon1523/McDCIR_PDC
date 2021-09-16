@@ -23,42 +23,74 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// PrimaryMessenger.cc
+// DetectorMessenger.cc
 // \author Haegin Han
 //
 
 #include "G4UIdirectory.hh"
-#include "G4UIcmdWithAString.hh"
+#include "G4UIcmdWith3Vector.hh"
+#include "G4UIcmdWith3VectorAndUnit.hh"
+#include "G4UIcmdWithADoubleAndUnit.hh"
+#include "G4UIcmdWithoutParameter.hh"
 #include "G4RunManager.hh"
 #include <sstream>
 #include <vector>
 #include "RunAction.hh"
-#include "PrimaryMessenger.hh"
+#include "DetectorMessenger.hh"
+#include "DetectorConstruction.hh"
+#include "G4SystemOfUnits.hh"
+#include "G4RunManager.hh"
 
-PrimaryMessenger::PrimaryMessenger(PrimaryGeneratorAction* _primary)
-:G4UImessenger(), fPrimary(_primary)
+DetectorMessenger::DetectorMessenger(DetectorConstruction* _det)
+:G4UImessenger(), fDet(_det)
 {
-	fExternalDir = new G4UIdirectory("/external/");
-	fBeamDirCmd = new G4UIcmdWithAString("/external/dir", this);
-	fBeamDirCmd->SetCandidates("AP PA LLAT RLAT ROT ISO");
+	fMachineDir = new G4UIdirectory("/machine/");
+	fTableTransCmd = new G4UIcmdWith3VectorAndUnit("/machine/tableTrans", this);
+	fTablePivotCmd = new G4UIcmdWithADoubleAndUnit("/mahcine/pivot", this);
+	fDetCmd = new G4UIcmdWith3Vector("/machine/c-arm", this);
+	fGlassTransCmd = new G4UIcmdWith3VectorAndUnit("/machine/glassTrans", this);
+	fGlassRotCmd = new G4UIcmdWith3Vector("/machine/glassRot", this);
+	fCloseCmd = new G4UIcmdWithoutParameter("/machine/close", this);
 
+	fTableTransCmd->SetDefaultUnit("cm");
+	fTablePivotCmd->SetDefaultUnit("deg");
+	fGlassTransCmd->SetDefaultUnit("cm");
 }
 
-PrimaryMessenger::~PrimaryMessenger() {
-	delete fExternalDir;
-	delete fBeamDirCmd;
+DetectorMessenger::~DetectorMessenger() {
+	delete fMachineDir;
+	delete fTableTransCmd; //trans
+	delete fTablePivotCmd; //pivot
+	delete fDetCmd; //primary, secondary, dummy
+	delete fGlassTransCmd;
+	delete fGlassRotCmd; // axis * angle(in deg)
+	delete fCloseCmd;
 }
 
-void PrimaryMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
+void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
 {
-	if(command == fBeamDirCmd){
-		ExternalBeam* fExternal = fPrimary->GetExternalBeamGenerator();
-		if(newValue=="AP")	      	fExternal->SetBeamDirection(AP);
-		else if(newValue=="PA")	    fExternal->SetBeamDirection(PA);
-		else if(newValue=="RLAT")	fExternal->SetBeamDirection(RLAT);
-		else if(newValue=="LLAT")	fExternal->SetBeamDirection(LLAT);
-		else if(newValue=="ROT")	fExternal->SetBeamDirection(ROT);
-		else if(newValue=="ISO")	fExternal->SetBeamDirection(ISO);
+	if(command == fTableTransCmd){
+		tableTrans = fTableTransCmd->GetNew3VectorValue(newValue);
+	}
+	else if(command == fTablePivotCmd){
+		tablePivot = fTablePivotCmd->GetNewDoubleValue(newValue);
+	}
+	else if(command == fDetCmd){
+		// fDet->
+	}
+	else if(command == fGlassTransCmd){
+		glassTrans = fGlassTransCmd->GetNew3VectorValue(newValue);
+	}
+	else if(command == fGlassRotCmd)
+	{
+		G4ThreeVector rot = fGlassRotCmd->GetNew3VectorValue(newValue);
+		glassTheta = rot.mag() * deg;
+		glassAxis = rot.unit();
+	}
+	else if(command == fCloseCmd){
+		// fDet->SetTablePose(tableTrans, tablePivot);
+		fDet->SetGlassPose(glassTrans, glassAxis, glassTheta);
+		G4RunManager::GetRunManager()->GeometryHasBeenModified();
 	}
 }
 

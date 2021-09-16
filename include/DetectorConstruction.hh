@@ -38,55 +38,37 @@
 #include "G4NistManager.hh"
 
 #include "G4Box.hh"
-#include "G4Tet.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 #include "G4PVParameterised.hh"
-#include "G4Sphere.hh"
-
-#include "G4SDManager.hh"
-#include "G4MultiFunctionalDetector.hh"
-#include "G4SystemOfUnits.hh"
-#include "G4VisAttributes.hh"
-#include "G4GeometryManager.hh"
-
-#include "TETModelImport.hh"
-#include "G4PSEnergyDeposit.hh"
+#include "DetectorMessenger.hh"
 
 class DetectorConstruction : public G4VUserDetectorConstruction
 {
 public:
-    DetectorConstruction(TETModelImport* tetData);
+    DetectorConstruction();
     virtual ~DetectorConstruction();
 
     virtual G4VPhysicalVolume* Construct();
-    virtual void ConstructSDandField();
 
     // Operating Table
-    void SetTableTrans(G4ThreeVector _table_trans) { table_trans = _table_trans; }
-    void SetTablePivotAngle(G4double _table_pivot_angle) { table_pivot_angle = _table_pivot_angle; }
+    void SetTablePose(G4ThreeVector _table_trans, G4double _table_pivot_angle) {  ;}
     // Glass
-    void SetGlassPose(G4ThreeVector _glass_trans, Quaterniond _glass_quat) 
+    void SetGlassPose(G4ThreeVector _glass_trans, G4ThreeVector _glass_axis, G4double _glass_theta) 
 	{
-		glass_trans = _glass_trans;
-    	if (glass_rotation_matrix) delete glass_rotation_matrix;
-    	MatrixXd mat = _glass_quaternion.matrix();
-    	G4ThreeVector col1(mat(0,0), mat(1,0), mat(2,0));
-    	G4ThreeVector col2(mat(0,1), mat(1,1), mat(2,1));
-    	G4ThreeVector col3(mat(0,2), mat(1,2), mat(2,2));
-    	glass_rotation_matrix = new G4RotationMatrix(-col1,-col2,-col3);
+		pv_glass->SetTranslation(_glass_trans);
+		pv_glass->GetRotation()->setAxis(_glass_axis);
+		pv_glass->GetRotation()->setTheta(-_glass_theta);
     }
     // C-arm will be updated
 
 
 private:
     void SetupWorldGeometry();
-	void ConstructPhantom();
-	void PrintPhantomInformation();
 
 	void ConstructOperatingTable();
-	void ConstructPatient();
-	void ConstructCarm();
+	G4LogicalVolume* ConstructPatient();
+	void ConstructCarmDet();
 	void ConstructPbGlass();
 
 	G4LogicalVolume*   worldLogical;
@@ -94,36 +76,31 @@ private:
 	G4LogicalVolume*   container_logic;
 	G4VPhysicalVolume* container_phy;
 
-	TETModelImport*    tetData;
-
 	// Material
 	G4Material* vacuum;
 	G4Material* water;
 	G4Material* lead;
 	G4Material* carbonfiber;
 
-	// Radiologist
-	G4ThreeVector doctor_translation;
-	G4LogicalVolume* lv_doctor;
-	G4VPhysicalVolume* pv_doctor;
-
 	// Operating Table
-	G4ThreeVector table_trans;
-	G4double table_pivot_angle;
+	G4VPhysicalVolume* pv_frame;
 	G4ThreeVector table_rotation_center;
 	G4RotationMatrix* table_rotation_matrix;
 	G4RotationMatrix* table_rotation_matrix2;
 	G4ThreeVector table_translation;
 
 	// Glass
-	G4ThreeVector glass_trans;
-	G4RotationMatrix* glass_rot;
 	G4VPhysicalVolume* pv_glass;
 
 	// C-arm
 	G4ThreeVector carm_isocenter;
-	G4double carm_primary;
-	G4double carm_secondary;
+	G4double carm_primary; //rao, lao
+	G4double carm_secondary; //cran, caud
+	G4VPhysicalVolume* pv_det;
+
+	//messenger
+	DetectorMessenger* messenger;
+	
 };
 
 

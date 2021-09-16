@@ -27,10 +27,6 @@
 #include "PrimaryGeneratorAction.hh"
 #include "G4ParticleTable.hh"
 
-enum DetectorZoomField
-{
-	FD48, FD42, FD37, FD31, FD27, FD23, FD19, FD16
-};
 
 PrimaryGeneratorAction::PrimaryGeneratorAction()
 : G4VUserPrimaryGeneratorAction()
@@ -43,7 +39,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
 	G4ThreeVector translate_from_origin(1120,600,1135);
 	carm_primary   = 20 * deg;  // +LAO, -RAO
 	carm_secondary = 20 * deg;  // +CAU, -CRA
-	rotate.rotateX(carm_secondary).rotateY(carm_primary);
+	rotate.rotateY(carm_primary).rotateX(carm_secondary);
 	G4ThreeVector focalSpot = rotate * G4ThreeVector(0,0,-810);
 	fPrimary->SetParticlePosition(focalSpot + translate_from_origin);
 }
@@ -92,7 +88,7 @@ void PrimaryGeneratorAction::SetSourceEnergy()
 
 	peak_energy = 80;
 	G4String fileName(to_string(peak_energy) + ".spec");
-	G4String spectra("../spectra/" + fileName);
+	G4String spectra("./spectra/" + fileName);
 
 	G4cout << "Read x-ray spectra: " << spectra << G4endl;
 	ifstream ifs(spectra);
@@ -128,7 +124,7 @@ void PrimaryGeneratorAction::SetSourceEnergy()
 	ifs.close();
 }
 
-void PrimaryGeneratorAction::FlatDetectorInitialization(G4int FD, G4double SID)
+void PrimaryGeneratorAction::FlatDetectorInitialization(DetectorZoomField FD, G4double SID)
 {
 	switch(FD) {
 	case DetectorZoomField::FD48:

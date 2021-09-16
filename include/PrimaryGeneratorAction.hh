@@ -45,6 +45,12 @@ using namespace std;
 
 class Messenger;
 
+enum DetectorZoomField
+{
+	FD48, FD42, FD37, FD31, FD27, FD23, FD19, FD16
+};
+
+
 class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
   public:
@@ -58,7 +64,7 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 	G4ParticleGun*  GetParticleGun()            const {return fPrimary;}
 	void SetSourceEnergy();
 
-	void FlatDetectorInitialization(G4int FD, G4double SID);
+	void FlatDetectorInitialization(DetectorZoomField FD, G4double SID);
 	G4ThreeVector SampleRectangularBeamDirection();
 
 

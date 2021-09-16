@@ -23,33 +23,45 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// PrimaryMessenger.cc
+// DetectorMessenger.cc
 // \file   MRCP_GEANT4/External/src/TETModelImport.cc
 // \author Haegin Han
 //
 
-#ifndef SRC_PrimaryMESSENGER_HH_
-#define SRC_PrimaryMESSENGER_HH_ 1
+#ifndef SRC_DetectorMessenger_HH_
+#define SRC_DetectorMessenger_HH_ 1
 
 #include "globals.hh"
 #include "G4UImessenger.hh"
 
 class G4UIdirectory;
-class G4UIcmdWithAString;
-class PrimaryGeneratorAction;
+class G4UIcmdWith3Vector;
+class G4UIcmdWith3VectorAndUnit;
+class G4UIcmdWithADoubleAndUnit;
+class G4UIcmdWithoutParameter;
+class DetectorConstruction;
 
-class PrimaryMessenger: public G4UImessenger
+class DetectorMessenger: public G4UImessenger
 {
 public:
-	PrimaryMessenger(PrimaryGeneratorAction* primary);
-	virtual ~PrimaryMessenger();
+	DetectorMessenger(DetectorConstruction* det);
+	virtual ~DetectorMessenger();
 
 	virtual void SetNewValue(G4UIcommand*, G4String);
 
 private:
-	PrimaryGeneratorAction* fPrimary;
-	G4UIdirectory*             fExternalDir;
-	G4UIcmdWithAString*        fBeamDirCmd;
+	DetectorConstruction* fDet;
+	G4UIdirectory*        fMachineDir;
+	G4UIcmdWith3VectorAndUnit* fTableTransCmd; //trans
+	G4UIcmdWithADoubleAndUnit* fTablePivotCmd; //pivot
+	G4UIcmdWith3Vector*        fDetCmd; //primary, secondary, SID
+	G4UIcmdWith3VectorAndUnit* fGlassTransCmd;
+	G4UIcmdWith3Vector*        fGlassRotCmd; // axis * angle(in deg)
+	G4UIcmdWithoutParameter*   fCloseCmd;
+
+	G4ThreeVector tableTrans, glassTrans, glassAxis;
+	G4double tablePivot, glassTheta;
+	
 };
 
 #endif

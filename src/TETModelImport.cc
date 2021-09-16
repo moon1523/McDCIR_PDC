@@ -124,7 +124,7 @@ void TETModelImport::DoseRead(G4String doseFile){
 
 void TETModelImport::ConstructTet()
 {
-	MatrixXd T = animator->GetT();
+	MatrixXi T = animator->GetT();
 	MatrixXd U = animator->GetU();
 	G4ThreeVector center = (boundingBox_Max + boundingBox_Min)*0.5;
 	for(G4int i=0; i<T.rows(); i++)

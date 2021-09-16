@@ -31,6 +31,7 @@
 #include "G4VUserActionInitialization.hh"
 #include "DetectorConstruction.hh"
 #include "G4Timer.hh"
+#include "TETModelImport.hh"
 
 class ActionInitialization : public G4VUserActionInitialization
 {
