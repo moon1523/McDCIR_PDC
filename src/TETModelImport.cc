@@ -43,7 +43,6 @@ TETModelImport::TETModelImport(G4String _phantomName)
 	G4String drfFile      =  phantomName + ".DRF";
 
 	animator = new PhantomAnimator(phantomName);
-	animator->Initialize();
 	animator->CalibrateTo("S_Moon");
 	UpdateBBox();
 }
