@@ -117,13 +117,14 @@ void PrimaryGeneratorAction::SetSourceEnergy()
 
 	sort(pdf.begin(), pdf.end(), greater<>());
 	transform(pdf.begin(), pdf.end(), pdf.begin(),
-			  [&sum](pair<G4double, G4double> iter) -> pair<G4double, G4double> { return make_pair(iter.first, iter.second / sum); });
+			  [&sum](pair<G4double, G4double> iter) -> pair<G4double, G4double> { return make_pair(iter.first / sum, iter.second); });
 
+	cdf.clear();
 	G4double sumProb(0);
 	for (auto itr : pdf)
 	{
-		sumProb += itr.second;
-		cdf[sumProb] = itr.first;
+		sumProb += itr.first;
+		cdf[sumProb] = itr.second;
 	}
 }
 
