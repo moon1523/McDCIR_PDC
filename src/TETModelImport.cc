@@ -48,7 +48,7 @@ TETModelImport::TETModelImport(G4String _phantomName)
 }
 
 TETModelImport::~TETModelImport()
-{
+{ 
 	delete animator;
 }
 
