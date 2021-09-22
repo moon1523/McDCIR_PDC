@@ -26,26 +26,29 @@
 
 #include "PrimaryGeneratorAction.hh"
 #include "G4ParticleTable.hh"
+#include "PrimaryMessenger.hh" 
 
 PrimaryGeneratorAction::PrimaryGeneratorAction()
-	: G4VUserPrimaryGeneratorAction()
+	: G4VUserPrimaryGeneratorAction(), isocenter(1120 * mm, 600 * mm, 1135 * mm)
 {
 	fPrimary = new G4ParticleGun();
 	fPrimary->SetParticleDefinition(G4ParticleTable::GetParticleTable()->FindParticle("gamma"));
 
 	FlatDetectorInitialization(DetectorZoomField::FD48, 119.5 * cm); // FD, SID
-	SetSourceEnergy();
-	G4ThreeVector translate_from_origin(1120, 600, 1135);
-	carm_primary = 20 * deg;   // +LAO, -RAO
-	carm_secondary = 20 * deg; // +CAU, -CRA
+	SetSourceEnergy(80);
+	G4double carm_primary = 20 * deg;   // +LAO, -RAO
+	G4double carm_secondary = 20 * deg; // +CAU, -CRA
 	rotate.rotateY(carm_primary).rotateX(carm_secondary);
-	G4ThreeVector focalSpot = rotate * G4ThreeVector(0, 0, -810);
-	fPrimary->SetParticlePosition(focalSpot + translate_from_origin);
+	G4ThreeVector focalSpot = rotate * G4ThreeVector(0, 0, -810 * mm);
+	fPrimary->SetParticlePosition(focalSpot + isocenter);
+
+	messenger = new PrimaryMessenger(this);
 }
 
 PrimaryGeneratorAction::~PrimaryGeneratorAction()
 {
 	delete fPrimary;
+	delete messenger;
 }
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
@@ -80,15 +83,15 @@ G4ThreeVector PrimaryGeneratorAction::SampleRectangularBeamDirection()
 	return rotate * G4ThreeVector(x, y, z);
 }
 
-void PrimaryGeneratorAction::SetSourceEnergy()
+void PrimaryGeneratorAction::SetSourceEnergy(G4int peakE)
 {
-	vector<pair<G4double, G4double>> pdf; //there could be duplicated probabilities, which may cause error in 'map'
-	peak_energy = 80;
-	G4String fileName(to_string(peak_energy) + ".spec");
+	G4String fileName(to_string(peakE) + ".spec");
 	G4String spectra("./spectra/" + fileName);
 
 	G4cout << "Read x-ray spectra: " << spectra << G4endl;
 	ifstream ifs(spectra);
+
+	vector<pair<G4double, G4double>> pdf; //there could be duplicated probabilities, which may cause error in 'map'
 	if (!ifs.is_open())
 	{
 		G4cerr << "X-ray spectra file was not opened" << G4endl;

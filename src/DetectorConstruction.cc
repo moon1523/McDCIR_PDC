@@ -80,15 +80,15 @@ void DetectorConstruction::SetupWorldGeometry()
 	worldLogical->SetVisAttributes(va_World);
 
 	// Define floor
-	G4double floorZ = 0 * cm;
-	G4Material* concrete = G4NistManager::Instance()->FindOrBuildMaterial("G4_CONCRETE");
-	G4Box* floor = new G4Box("floor", worldHalfX, worldHalfY, (floorZ+worldHalfZ)*0.5);
-	G4LogicalVolume* lv_floor = new G4LogicalVolume(floor, concrete, "lv_floor");
-	new G4PVPlacement(0, G4ThreeVector(0,0,(-worldHalfZ)+(floorZ+worldHalfZ)*0.5), lv_floor, "pv_floor", worldLogical,0,0);
+	// G4double floorZ = 0 * cm;
+	// G4Material* concrete = G4NistManager::Instance()->FindOrBuildMaterial("G4_CONCRETE");
+	// G4Box* floor = new G4Box("floor", worldHalfX, worldHalfY, (floorZ+worldHalfZ)*0.5);
+	// G4LogicalVolume* lv_floor = new G4LogicalVolume(floor, concrete, "lv_floor");
+	// new G4PVPlacement(0, G4ThreeVector(0,0,(-worldHalfZ)+(floorZ+worldHalfZ)*0.5), lv_floor, "pv_floor", worldLogical,0,0);
 
-	G4VisAttributes* vis_floor  = new G4VisAttributes(G4Colour(0.8,0.8,0.8,0.5));
-	vis_floor->SetForceAuxEdgeVisible();
-	lv_floor->SetVisAttributes(vis_floor);
+	// G4VisAttributes* vis_floor  = new G4VisAttributes(G4Colour(0.8,0.8,0.8,0.5));
+	// vis_floor->SetForceAuxEdgeVisible();
+	// lv_floor->SetVisAttributes(vis_floor);
 }
 
 void DetectorConstruction::ConstructOperatingTable()
@@ -198,7 +198,7 @@ void DetectorConstruction::ConstructCarmDet()
 	carm_rotation_matrix = new G4RotationMatrix;
 
 	// C-arm	
-	G4LogicalVolume* lv_det = new G4LogicalVolume(new G4Box("pv_det", 42*cm*0.5, 52*cm, 1*cm), G4NistManager::Instance()->FindOrBuildMaterial("G4_Pb"), "lv_det");
+	G4LogicalVolume* lv_det = new G4LogicalVolume(new G4Box("pv_det", 42*cm*0.5, 52*cm*0.5, 1*cm), G4NistManager::Instance()->FindOrBuildMaterial("G4_Pb"), "lv_det");
 	lv_det->SetVisAttributes(new G4VisAttributes(G4Colour(1.0, 1.0, 1.0,0.5)));
 	pv_det = new G4PVPlacement(carm_rotation_matrix, G4ThreeVector(), lv_det, "pv_det", worldLogical, false, 0);
 }
