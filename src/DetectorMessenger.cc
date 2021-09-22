@@ -55,13 +55,17 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* _det)
 	fTableTransCmd->SetDefaultUnit("cm");
 	fTablePivotCmd->SetDefaultUnit("deg");
 	fGlassTransCmd->SetDefaultUnit("cm");
+
+	fDetCmd->SetParameterName("lao[deg]", "caud[deg]", "sid[cm]", true, true);
+	fGlassRotCmd->SetParameterName("axisX*[deg]", "axisY*[deg]", "axisZ*[deg]", false);
+
 }
 
 DetectorMessenger::~DetectorMessenger() {
 	delete fMachineDir;
 	delete fTableTransCmd; //trans
 	delete fTablePivotCmd; //pivot
-	delete fDetCmd; //primary, secondary, dummy
+	delete fDetCmd; //primary, secondary, sid
 	delete fGlassTransCmd;
 	delete fGlassRotCmd; // axis * angle(in deg)
 	delete fCloseCmd;
@@ -71,25 +75,27 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
 {
 	if(command == fTableTransCmd){
 		tableTrans = fTableTransCmd->GetNew3VectorValue(newValue);
+		fDet->SetTablePose(tableTrans, tablePivot);
 	}
 	else if(command == fTablePivotCmd){
 		tablePivot = fTablePivotCmd->GetNewDoubleValue(newValue);
+		fDet->SetTablePose(tableTrans, tablePivot);
 	}
 	else if(command == fDetCmd){
-		// fDet->
+		G4ThreeVector det = fDetCmd->GetNew3VectorValue(newValue);
+		fDet->SetCarmDetPose(det.x()*deg, det.y()*deg, det.z()*cm);
 	}
 	else if(command == fGlassTransCmd){
 		glassTrans = fGlassTransCmd->GetNew3VectorValue(newValue);
+		fDet->SetGlassPose(glassTrans, glassAxis, glassTheta);
 	}
-	else if(command == fGlassRotCmd)
-	{
+	else if(command == fGlassRotCmd){
 		G4ThreeVector rot = fGlassRotCmd->GetNew3VectorValue(newValue);
 		glassTheta = rot.mag() * deg;
 		glassAxis = rot.unit();
+		fDet->SetGlassPose(glassTrans, glassAxis, glassTheta);
 	}
 	else if(command == fCloseCmd){
-		// fDet->SetTablePose(tableTrans, tablePivot);
-		fDet->SetGlassPose(glassTrans, glassAxis, glassTheta);
 		G4RunManager::GetRunManager()->GeometryHasBeenModified();
 	}
 }

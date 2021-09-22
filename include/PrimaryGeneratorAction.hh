@@ -76,9 +76,7 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     G4RotationMatrix rotate;
 
     // Energy
-    map<G4double, G4double> pdf;
-    map<G4double, G4double, greater<G4double>> pdf_sort;
-    map<G4double, G4double> cdf_sort;
+    map<G4double, G4double> cdf;
     G4int peak_energy;
 
 };

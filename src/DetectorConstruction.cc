@@ -34,37 +34,24 @@
 using namespace std;
 
 DetectorConstruction::DetectorConstruction()
-:worldLogical(0) ,worldPhysical(0), container_logic(0), container_phy(0)
+:worldLogical(0) ,worldPhysical(0)
 {
-	// Material
-	vacuum = G4NistManager::Instance()->FindOrBuildMaterial("G4_Galactic");
-	water = G4NistManager::Instance()->FindOrBuildMaterial("G4_WATER");
-	lead = G4NistManager::Instance()->FindOrBuildMaterial("G4_Pb");
-	carbonfiber = G4NistManager::Instance()->FindOrBuildMaterial("G4_Galactic");
-
 	// Operating Table (w/ patient, curtain)
 //	table_ocr = G4ThreeVector(-280,-960,-10); // Initial position
 	// table_trans = G4ThreeVector(-80*mm, 20*mm -10*mm);     // Operating position
 	// table_pivot_angle = 0 * deg;              // Z axis rotation
 	// table_rotation_center = G4ThreeVector(1200*mm, 0*mm, 820*mm);
-	// table_rotation_matrix = new G4RotationMatrix;
-	// table_rotation_matrix->rotateZ(table_pivot_angle);
-	// table_rotation_matrix2 = new G4RotationMatrix;
-	// table_rotation_matrix2->rotateZ(-table_pivot_angle); // to rotate solid
-	// table_translation = (*table_rotation_matrix) * table_ocr + table_rotation_center;
 
-	// C-arm (visualization)
+	// C-arm det
 	carm_isocenter = G4ThreeVector(1120 * mm, 600 * mm,1135 * mm);
-	carm_primary   = 20 * deg;   // +LAO, -RAO
-	carm_secondary = 20 * deg;   // +CAU, -CRA
+	// carm_primary   = 20 * deg;   // +LAO, -RAO
+	// carm_secondary = 20 * deg;   // +CAU, -CRA
 
 	messenger = new DetectorMessenger(this);
 }
 
 DetectorConstruction::~DetectorConstruction()
 {
-	delete table_rotation_matrix;
-	delete table_rotation_matrix2;
 	delete messenger;
 }
 
@@ -116,7 +103,9 @@ void DetectorConstruction::ConstructOperatingTable()
 	G4double halfX = max(tableHalfSize.x()+curtainHalfSize.x(),((G4Box*) lv_phantomBox->GetSolid())->GetXHalfLength());
 	G4Box* frame = new G4Box("sol_frame", halfX, tableHalfSize.y(), halfZ);
 	G4LogicalVolume* lv_frame = new G4LogicalVolume(frame, G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR"), "lv_frame");
-	pv_frame = 	new G4PVPlacement(new G4RotationMatrix, table_translation, lv_frame, "pv_frame", worldLogical, false, 0);
+	frame_rotation_matrix = new G4RotationMatrix();
+	frame_rotation_matrix->setAxis(G4ThreeVector(0,0,-1));
+ 	pv_frame = 	new G4PVPlacement(frame_rotation_matrix, table_translation, lv_frame, "pv_frame", worldLogical, false, 0);
 
 	// phantom box
 	new G4PVPlacement(0, G4ThreeVector(0,frame->GetYHalfLength()-((G4Box*) lv_phantomBox->GetSolid())->GetYHalfLength()-10*cm,halfZ-((G4Box*) lv_phantomBox->GetSolid())->GetZHalfLength()),lv_phantomBox, "phantom box", lv_frame, false, 0);
@@ -126,6 +115,7 @@ void DetectorConstruction::ConstructOperatingTable()
 	G4LogicalVolume* lv_table = new G4LogicalVolume(table, G4NistManager::Instance()->FindOrBuildMaterial("G4_Al"), "lv_table");
 	auto pv_table = new G4PVPlacement(0, G4ThreeVector(0,0,halfZ-((G4Box*) lv_phantomBox->GetSolid())->GetZHalfLength()*2.-tableHalfSize.z()), lv_table, "pv_table", lv_frame, false, 0);
 	lv_table->SetVisAttributes( new G4VisAttributes(G4Colour(1.,1.,0.)) );
+	frame_ralative_to_table = -pv_table->GetTranslation();
 
 	// Pb Curtain - ? x ? cm lead apron, lead equivalence 0.5 mm Pb
 	G4Box* curtain = new G4Box("sol_curtain", curtainHalfSize.x(), curtainHalfSize.y(), curtainHalfSize.z());
@@ -205,13 +195,12 @@ G4LogicalVolume* DetectorConstruction::ConstructPatient()
 void DetectorConstruction::ConstructCarmDet()
 {
 	// This member function didn't considered the set functions of G4VPhyscialVolume.
-	G4RotationMatrix* carm_rotation_matrix = new G4RotationMatrix;
-	carm_rotation_matrix->rotateY(carm_primary).rotateX(carm_secondary);
+	carm_rotation_matrix = new G4RotationMatrix;
 
 	// C-arm	
 	G4LogicalVolume* lv_det = new G4LogicalVolume(new G4Box("pv_det", 42*cm*0.5, 52*cm, 1*cm), G4NistManager::Instance()->FindOrBuildMaterial("G4_Pb"), "lv_det");
 	lv_det->SetVisAttributes(new G4VisAttributes(G4Colour(1.0, 1.0, 1.0,0.5)));
-	pv_det = new G4PVPlacement(carm_rotation_matrix, G4ThreeVector(100*cm, 100*cm, 100*cm), lv_det, "pv_det", worldLogical, false, 0);
+	pv_det = new G4PVPlacement(carm_rotation_matrix, G4ThreeVector(), lv_det, "pv_det", worldLogical, false, 0);
 }
 
 void DetectorConstruction::ConstructPbGlass()

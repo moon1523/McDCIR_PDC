@@ -52,7 +52,13 @@ public:
     virtual G4VPhysicalVolume* Construct();
 
     // Operating Table
-    void SetTablePose(G4ThreeVector _table_trans, G4double _table_pivot_angle) {  ;}
+    void SetTablePose(G4ThreeVector table_trans, G4double table_pivot_angle) 
+	//_table_trans is the translation from when rotation center is at the center of the table
+	{  
+		frame_rotation_matrix->setTheta(table_pivot_angle);
+		pv_frame->SetTranslation(frame_ralative_to_table + table_rotation_center + frame_rotation_matrix->inverse() * table_trans);
+	}
+
     // Glass
     void SetGlassPose(G4ThreeVector _glass_trans, G4ThreeVector _glass_axis, G4double _glass_theta) 
 	{
@@ -60,7 +66,16 @@ public:
 		pv_glass->GetRotation()->setAxis(_glass_axis);
 		pv_glass->GetRotation()->setTheta(-_glass_theta);
     }
-    // C-arm will be updated
+
+    // C-arm det
+    void SetCarmDetPose(G4double _carm_primary, G4double _carm_secondary, G4double _carm_sid) 
+	// 	carm_primary: rao, lao | carm_secondary: cran, caud
+	{
+		carm_rotation_matrix->setTheta(0); //set identity
+		carm_rotation_matrix->rotateY(_carm_primary).rotateX(_carm_secondary);
+		carm_rotation_matrix->invert();
+		pv_det->SetTranslation(carm_rotation_matrix->inverse()*G4ThreeVector(0,0,_carm_sid) + carm_isocenter);
+    }
 
 
 private:
@@ -73,30 +88,21 @@ private:
 
 	G4LogicalVolume*   worldLogical;
 	G4VPhysicalVolume* worldPhysical;
-	G4LogicalVolume*   container_logic;
-	G4VPhysicalVolume* container_phy;
-
-	// Material
-	G4Material* vacuum;
-	G4Material* water;
-	G4Material* lead;
-	G4Material* carbonfiber;
 
 	// Operating Table
 	G4VPhysicalVolume* pv_frame;
 	G4ThreeVector table_rotation_center;
-	G4RotationMatrix* table_rotation_matrix;
-	G4RotationMatrix* table_rotation_matrix2;
+	G4RotationMatrix* frame_rotation_matrix; //inverse
 	G4ThreeVector table_translation;
+	G4ThreeVector frame_ralative_to_table;
 
 	// Glass
 	G4VPhysicalVolume* pv_glass;
 
 	// C-arm
-	G4ThreeVector carm_isocenter;
-	G4double carm_primary; //rao, lao
-	G4double carm_secondary; //cran, caud
 	G4VPhysicalVolume* pv_det;
+	G4ThreeVector carm_isocenter;
+	G4RotationMatrix* carm_rotation_matrix; //inverse
 
 	//messenger
 	DetectorMessenger* messenger;
