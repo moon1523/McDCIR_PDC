@@ -56,14 +56,56 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
 {
 	// print the progress at the interval of 10%
 	numOfEvent=aRun->GetNumberOfEventToBeProcessed();
-	G4RunManager::GetRunManager()->SetPrintProgress(int(numOfEvent*0.1));
-
-
+	G4RunManager::GetRunManager()->SetPrintProgress(G4int(numOfEvent*0.1));
 }
 
 void RunAction::EndOfRunAction(const G4Run* aRun)
 {
+	// print the result only in the Master
+	if(!isMaster) return;
 
+	// get the run ID
+	runID = aRun->GetRunID();
+
+	// Print the run result by G4cout and std::ofstream
+	//
+	// print by G4cout
+	PrintResult(G4cout);
+
+	// print by std::ofstream
+	std::ofstream ofs(outputFile.c_str());
+	PrintResult(ofs);
+	ofs.close();
 }
 
+void RunAction::PrintResult(std::ostream &out)
+{
+	// Print run result
+	//
+	using namespace std;
+	EDEPMAP edepMap = *fRun->GetEdepMap();
 
+	out << G4endl
+	    << "=====================================================================" << G4endl
+	    << " Run #" << runID << " / Number of event processed : "<< numOfEvent     << G4endl
+	    << "=====================================================================" << G4endl
+	    << "organ ID| "
+		<< setw(19) << "Organ Mass (g)"
+		<< setw(19) << "Dose (Gy/source)"
+		<< setw(19) << "Relative Error" << G4endl;
+
+	out.precision(3);
+	auto massMap = tetData->GetMassMap();
+	for(auto itr : massMap){
+		G4double meanDose    = edepMap[itr.first].first  / itr.second / numOfEvent;
+		G4double squareDoese = edepMap[itr.first].second / (itr.second*itr.second);
+		G4double variance    = ((squareDoese/numOfEvent) - (meanDose*meanDose))/numOfEvent;
+		G4double relativeE   = sqrt(variance)/meanDose;
+
+		out << setw(8)  << itr.first << "| "
+			<< setw(19) << fixed      << itr.second/g;
+		out	<< setw(19) << scientific << meanDose/(joule/kg);
+		out	<< setw(19) << fixed      << relativeE << G4endl;
+	}
+	out << "=====================================================================" << G4endl << G4endl;
+}

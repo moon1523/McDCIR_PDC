@@ -71,7 +71,7 @@ int main(int argc, char** argv)
 	physicsList->RegisterPhysics(new G4StepLimiterPhysics());
 	physicsList->RegisterPhysics(new G4ParallelWorldPhysics("parallel"));
 	runManager->SetUserInitialization(physicsList);
-	runManager->SetUserInitialization(new ActionInitialization(0, output, initTimer));
+	runManager->SetUserInitialization(new ActionInitialization(tetData, output, initTimer));
 
 	// Initialize visualization
 	G4VisManager* visManager = new G4VisExecutive("Quiet");
