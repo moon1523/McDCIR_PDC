@@ -7,6 +7,7 @@ PhantomAnimator::PhantomAnimator(string prefix)
 {
     cout << "Read " + prefix + ".tgf" << endl;
     igl::readTGF(prefix + ".tgf", C, BE);
+    C *= cm;
     igl::directed_edge_parents(BE, P);
 
     //distance to parent joint
@@ -16,6 +17,7 @@ PhantomAnimator::PhantomAnimator(string prefix)
     ReadTetMesh(prefix);
     V_calib = V;
     C_calib = C;
+    U = V_calib;
 
     if (!igl::readDMAT(prefix + ".W", W) || !igl::readDMAT(prefix + ".Wj", Wj))
         PreparePhantom(prefix);
@@ -37,8 +39,7 @@ PhantomAnimator::PhantomAnimator(string prefix)
         cleanWeights.push_back(vertexWeight);
     }
 
-    // ReadFiles(prefix);
-    ReadProfileData("../phantoms/profile.txt");
+    ReadProfileData("./phantoms/profile.txt");
 }
 
 void PhantomAnimator::ReadTetMesh(string prefix)
@@ -90,6 +91,7 @@ void PhantomAnimator::PreparePhantom(string prefix) //there should be prefix.ply
         cout << "There is no " + prefix + ".ply file!" << endl;
         exit(1);
     }
+    Vply *= cm;
     MatrixXd boneP = GenerateBonePoints(C, BE, 1.);
     Vply.conservativeResize(Vply.rows() + boneP.rows(), 3);
     Vply.bottomRows(boneP.rows()) = boneP;
@@ -169,6 +171,8 @@ string PhantomAnimator::CalibrateTo(string name)
     U = V_calib;
     //MatrixXd jt = jointTrans.block(0,0,C.rows()-1,3);
 
+    auto degen = CheckDegeneracy(U, T.block(0,0,T.rows(), 4));
+    cout<<"phantom scaling done...degen#: "<<degen.size()<<endl;
     return ss.str();
 }
 
@@ -232,7 +236,7 @@ bool PhantomAnimator::ReadProfileData(string fileName)
         for (int j = 0; j < 17; j++)
         {
             ss1 >> d;
-            jointLengths[i][boneIDs[j]] = d;
+            jointLengths[i][boneIDs[j]] = d*cm;
         }
         for (int j = 0; j < 3; j++)
         {

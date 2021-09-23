@@ -23,32 +23,36 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+// \author: Haegin Han
+//
+#ifndef ParallelPhantom_h
+#define ParallelPhantom_h 1
 
-
-#ifndef Run_h
-#define Run_h 1
-
-#include "G4Run.hh"
-#include "G4Event.hh"
-#include "G4THitsMap.hh"
-#include "G4SDManager.hh"
+#include "G4VUserParallelWorld.hh"
+#include "globals.hh"
 #include "TETModelImport.hh"
 
-typedef std::map<G4int, std::pair<G4double, G4double>> EDEPMAP;
+class G4LogicalVolume;
+class G4VPhysicalVolume;
 
-class Run : public G4Run
+class ParallelPhantom : public G4VUserParallelWorld
 {
 public:
-	Run(TETModelImport* tetData);
-	virtual ~Run();
+  ParallelPhantom(G4String parallelWorldName, TETModelImport* _tetData);
+  virtual ~ParallelPhantom();
 
-	virtual void RecordEvent(const G4Event*);
-    virtual void Merge(const G4Run*);
-
-    EDEPMAP* GetEdepMap() {return &edepMap;};
+public:
+  virtual void Construct();
+  virtual void ConstructSD();
 
 private:
-	EDEPMAP edepMap;
+  G4bool fConstructed;
+  
+  // Radiologist
+  TETModelImport*    tetData;
+  G4ThreeVector      doctor_translation;
+  G4LogicalVolume*   lv_tet;
+  G4VPhysicalVolume* pv_doctor;
 };
 
 #endif

@@ -29,7 +29,7 @@
 Run::Run(TETModelImport* tetData)
 :G4Run()
 {
-
+	edepMap.clear();
 }
 
 Run::~Run()
@@ -38,12 +38,33 @@ Run::~Run()
 
 void Run::RecordEvent(const G4Event* event)
 {
+	auto  fCollID
+	= G4SDManager::GetSDMpointer()->GetCollectionID("phantom/edep");
 
+	// Hits collections
+	//
+	G4HCofThisEvent* HCE = event->GetHCofThisEvent();
+	if(!HCE) return;
+
+	G4THitsMap<G4double>* evtMap =
+			static_cast<G4THitsMap<G4double>*>(HCE->GetHC(fCollID));
+
+	// sum up the energy deposition and the square of it
+	for (auto itr : *evtMap->GetMap()) {
+		edepMap[itr.first].first  += *itr.second;                   //sum
+		edepMap[itr.first].second += (*itr.second) * (*itr.second); //sum square
+	}
 }
 
 void Run::Merge(const G4Run* run)
 {
+	// merge the data from each thread
+	EDEPMAP localMap = static_cast<const Run*>(run)->edepMap;
 
+	for(auto itr : localMap){
+		edepMap[itr.first].first  += itr.second.first;
+		edepMap[itr.first].second += itr.second.second;
+	}
 
 	G4Run::Merge(run);
 }

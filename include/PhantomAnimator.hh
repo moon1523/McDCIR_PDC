@@ -31,6 +31,7 @@
 #include <Eigen/StdVector>
 #include <Eigen/SparseCore>
 
+#include "G4GeometryTolerance.hh"
 
 class PhantomAnimator
 {
@@ -49,11 +50,7 @@ public:
     MatrixXd GetU(){ return U; }
     MatrixXi GetT(){ return T; }
 
-public:
     bool ReadProfileData(string fileName);
-    map<string, int> profileIDs;
-    vector<map<int, double>> jointLengths;
-    vector<Vector3d> eyeR_vec, eyeL_vec;
 
 //variables
 private:
@@ -62,12 +59,33 @@ private:
     VectorXi P;
     MatrixXd V_calib, C_calib;
     vector<int> eyeIDs;
-    // vector<int> eye2ply;
-    // RotationList alignRot;
     vector<map<int, double>> cleanWeights;
-  
-    //tmp
     map<int, double> lengths;
+
+    map<string, int> profileIDs;
+    vector<map<int, double>> jointLengths;
+    vector<Vector3d> eyeR_vec, eyeL_vec;
+
+    vector<int> CheckDegeneracy(const MatrixXd& VV, const MatrixXi& TT)
+    {
+        double tol = G4GeometryTolerance::GetInstance()->GetSurfaceTolerance()*8./3.;
+    
+        MatrixXd A;
+        igl::face_areas(VV, TT, A);
+        VectorXd Amax = A.rowwise().maxCoeff();
+        VectorXd vol;
+        igl::volume(VV, TT, vol);
+        vol = vol.array().abs();
+
+        vector<int> degen;
+        for(int i=0;i<T.rows();i++)
+        {
+            if(vol(i)<Amax(i)*tol)
+                degen.push_back(i);
+        }
+        return degen;
+    }
+
 };
 
 #endif

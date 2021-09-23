@@ -45,6 +45,10 @@ TETModelImport::TETModelImport(G4String _phantomName)
 	animator = new PhantomAnimator(phantomName);
 	animator->CalibrateTo("S_Moon");
 	UpdateBBox();
+
+	ConstructTet();
+	MaterialRead(materialFile);
+	PrintMaterialInfomation();
 }
 
 TETModelImport::~TETModelImport()
@@ -118,7 +122,6 @@ void TETModelImport::DoseRead(G4String doseFile){
 		}
 	}
 	ifs.close();
-
 }
 
 void TETModelImport::ConstructTet()
@@ -126,6 +129,8 @@ void TETModelImport::ConstructTet()
 	MatrixXi T = animator->GetT();
 	MatrixXd U = animator->GetU();
 	G4ThreeVector center = (boundingBox_Max + boundingBox_Min)*0.5;
+	G4bool degenChk;
+	G4int degenCount(0);
 	for(G4int i=0; i<T.rows(); i++)
 	{
 		materialVector.push_back(T(i,4));
@@ -135,7 +140,8 @@ void TETModelImport::ConstructTet()
 							   		  RowToG4Vec(U.row(T(i,0)))-center,
 									  RowToG4Vec(U.row(T(i,1)))-center,
 									  RowToG4Vec(U.row(T(i,2)))-center,
-									  RowToG4Vec(U.row(T(i,3)))-center));
+									  RowToG4Vec(U.row(T(i,3)))-center, &degenChk));
+		if(degenChk) degenCount++;
 
 		// calculate the total volume and the number of tetrahedrons for each organ
 		std::map<G4int, G4double>::iterator FindIter = volumeMap.find(materialVector[i]);
@@ -149,6 +155,7 @@ void TETModelImport::ConstructTet()
 			numTetMap[materialVector[i]] = 1;
 		}
 	}
+	G4cout<<"G4Tet construction done...degen#: "<<degenCount<<G4endl;
 }
 
 void TETModelImport::MaterialRead(G4String materialFile)
