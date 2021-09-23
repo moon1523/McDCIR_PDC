@@ -44,6 +44,7 @@ public:
 public:
   virtual void Construct();
   virtual void ConstructSD();
+  void Deform(RotationList vQ, Vector3d root);
 
 private:
   G4bool fConstructed;
