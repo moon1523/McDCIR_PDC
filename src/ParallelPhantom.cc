@@ -99,7 +99,7 @@ void ParallelPhantom::Deform(RotationList vQ, Vector3d root)
   G4ThreeVector center = (tetData->GetPhantomBoxMax() + tetData->GetPhantomBoxMin())*0.5;
   G4ThreeVector halfSize = (tetData->GetPhantomBoxMax() - tetData->GetPhantomBoxMin())*0.5 + G4ThreeVector(5., 5., 5.)*cm; //5-cm-margin
   pv_doctor->SetTranslation(center);
-  ((G4Box*)pv_doctor->GetLogicalVolume()->GetSolid())->SetXHalfLength(halfSize.x());
-  ((G4Box*)pv_doctor->GetLogicalVolume()->GetSolid())->SetYHalfLength(halfSize.y());
-  ((G4Box*)pv_doctor->GetLogicalVolume()->GetSolid())->SetZHalfLength(halfSize.z());
+  dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetXHalfLength(halfSize.x());
+  dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetYHalfLength(halfSize.y());
+  dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetZHalfLength(halfSize.z());
 }
