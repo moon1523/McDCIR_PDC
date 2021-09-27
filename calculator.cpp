@@ -1,6 +1,6 @@
 // Geant4
 #include "G4UImanager.hh"
-#include "G4MTRunManager.hh"
+#include "G4RunManagerFactory.hh"
 
 #include "DetectorConstruction.hh"
 #include "ParallelPhantom.hh"
@@ -43,7 +43,7 @@ int main(int argc, char** argv)
 		}
 		else if ( G4String(argv[i]) == "-v" )
 		{
-			ui = new G4UIExecutive(argc, argv, "csh");
+			ui = new G4UIExecutive(argc, argv, "Qt");
 		}
 		else {
 			cout << "argument check" << endl;
@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 	// default output file name
 	if ( !output.size() ) output = macro + ".out";
 
-	G4MTRunManager* runManager = new G4MTRunManager();
+	auto* runManager = G4RunManagerFactory::CreateRunManager(G4RunManagerType::MT);
 
 	// Choose the Random engine
 	G4Random::setTheEngine(new CLHEP::RanecuEngine);
@@ -86,8 +86,8 @@ int main(int argc, char** argv)
 	}
 	else {
 		// interactive mode
-		// UImanager->ApplyCommand("/control/execute init_vis.mac");
-		runManager->Initialize();
+		UImanager->ApplyCommand("/control/execute init_vis.mac");
+		// runManager->Initialize();
 		ui->SessionStart();
 		delete ui;
 	}

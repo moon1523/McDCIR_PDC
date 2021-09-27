@@ -39,14 +39,19 @@
 #include "G4SDManager.hh"
 #include "TETParameterisation.hh"
 #include "TETPSEnergyDeposit.hh"
+#include "ParallelMessenger.hh"
 
 ParallelPhantom
 ::ParallelPhantom(G4String parallelWorldName, TETModelImport* _tetData)
 :G4VUserParallelWorld(parallelWorldName),fConstructed(false), tetData(_tetData)
-{;}
+{
+  messenger = new ParallelMessenger(this);
+}
 
 ParallelPhantom::~ParallelPhantom()
-{;}
+{
+  delete messenger;
+}
 
 void ParallelPhantom::Construct()
 {
@@ -74,7 +79,8 @@ void ParallelPhantom::Construct()
   lv_tet = new G4LogicalVolume(new G4Tet("tet", G4ThreeVector(), G4ThreeVector(0, 0, 1*cm),
                                          G4ThreeVector(0, 1*cm, 0), G4ThreeVector(1*cm, 0, 0)),0,"tet");
   TETParameterisation* param = new TETParameterisation(tetData);
-  new G4PVParameterised("paraPara",lv_tet, lv_phantomBox, kUndefined, tetData->GetNumTetrahedron(), param);
+  // new G4PVParameterised("paraPara",lv_tet, lv_phantomBox, kUndefined, tetData->GetNumTetrahedron(), param);
+  new G4PVParameterised("param",lv_tet, lv_phantomBox, kUndefined, 1, param);
 }
 
 void ParallelPhantom::ConstructSD()

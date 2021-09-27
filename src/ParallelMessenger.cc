@@ -29,6 +29,7 @@
 
 #include "G4UIdirectory.hh"
 #include "G4UIcmdWithAnInteger.hh"
+#include "G4UIcmdWithAString.hh"
 #include "G4RunManager.hh"
 #include <sstream>
 #include <vector>
@@ -43,18 +44,24 @@ ParallelMessenger::ParallelMessenger(ParallelPhantom* _phantom)
 {
 	fPhantomDir = new G4UIdirectory("/phantom/");
 	fDeformCmd = new G4UIcmdWithAnInteger("/phantom/frame", this);
+	fDataReadCmd = new G4UIcmdWithAString("/phantom/data", this);
+
 }
 
 ParallelMessenger::~ParallelMessenger() {
 	delete fPhantomDir;
 	delete fDeformCmd; 
+	delete fDataReadCmd;
 }
 
 void ParallelMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
 {
 	if(command == fDeformCmd){
-		// fPhantom->Deform()
-		// fDet->SetTablePose(tableTrans, tablePivot);
+		G4int i = fDeformCmd->GetNewIntValue(newValue);
+		fPhantom->Deform(vQ_vec[i], roots[i]);
+	}
+	else if(command == fDataReadCmd){
+		ReadPostureData(newValue);
 	}
 }
 
@@ -82,5 +89,7 @@ void ParallelMessenger::ReadPostureData(G4String fileName)
 			ss>>w>>x>>y>>z;
 			vQ.push_back(Quaterniond(w, x, y, z));
 		}
+		vQ_vec.push_back(vQ);
 	}
+	ifs.close();
 }

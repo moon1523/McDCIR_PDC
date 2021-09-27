@@ -63,8 +63,9 @@ void TETModelImport::Deform(RotationList vQ, Vector3d root)
 
 	MatrixXi T = animator->GetT();
 	MatrixXd U = animator->GetU();
+	G4ThreeVector center = (boundingBox_Max + boundingBox_Min)*0.5;
 	for (G4int i=0; i<T.rows(); i++)
-		tetVector[i]->SetVertices(RowToG4Vec(U.row(T(i,0))),RowToG4Vec(U.row(T(i,1))),RowToG4Vec(U.row(T(i,2))),RowToG4Vec(U.row(T(i,3))));
+		tetVector[i]->SetVertices(RowToG4Vec(U.row(T(i,0)))-center,RowToG4Vec(U.row(T(i,1)))-center,RowToG4Vec(U.row(T(i,2)))-center,RowToG4Vec(U.row(T(i,3)))-center);
 }
 
 // void TETModelImport::ReadFrameRecord()

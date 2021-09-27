@@ -34,6 +34,7 @@
 
 class G4LogicalVolume;
 class G4VPhysicalVolume;
+class ParallelMessenger;
 
 class ParallelPhantom : public G4VUserParallelWorld
 {
@@ -48,7 +49,8 @@ public:
 
 private:
   G4bool fConstructed;
-  
+  ParallelMessenger* messenger;
+
   // Radiologist
   TETModelImport*    tetData;
   G4ThreeVector      doctor_translation;

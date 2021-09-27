@@ -36,8 +36,12 @@
 
 class G4UIdirectory;
 class G4UIcmdWithAnInteger;
+class G4UIcmdWithAString;
 class ParallelPhantom;
 
+typedef
+  std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> >
+  VectorList;
 class ParallelMessenger: public G4UImessenger
 {
 public:
@@ -52,9 +56,10 @@ private:
 	ParallelPhantom* fPhantom;
 	G4UIdirectory*   fPhantomDir;
 	G4UIcmdWithAnInteger* fDeformCmd; 
+	G4UIcmdWithAString* fDataReadCmd; 
 
 	vector<RotationList> vQ_vec;
-	vector<Vector3d> roots;
+	VectorList roots;
 };
 
 #endif
