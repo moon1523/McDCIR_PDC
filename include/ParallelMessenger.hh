@@ -23,43 +23,38 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// DetectorMessenger.cc
-// \file   MRCP_GEANT4/External/src/TETModelImport.cc
+// ParallelMessenger.cc
 // \author Haegin Han
 //
 
-#ifndef SRC_DetectorMessenger_HH_
-#define SRC_DetectorMessenger_HH_ 1
+#ifndef SRC_ParallelMessenger_HH_
+#define SRC_ParallelMessenger_HH_ 1
 
 #include "globals.hh"
 #include "G4UImessenger.hh"
+#include "functions.h"
 
 class G4UIdirectory;
-class G4UIcmdWith3Vector;
-class G4UIcmdWith3VectorAndUnit;
-class G4UIcmdWithADoubleAndUnit;
-class DetectorConstruction;
+class G4UIcmdWithAnInteger;
+class ParallelPhantom;
 
-class DetectorMessenger: public G4UImessenger
+class ParallelMessenger: public G4UImessenger
 {
 public:
-	DetectorMessenger(DetectorConstruction* det);
-	virtual ~DetectorMessenger();
+	ParallelMessenger(ParallelPhantom* phantom);
+	virtual ~ParallelMessenger();
 
 	virtual void SetNewValue(G4UIcommand*, G4String);
 
-private:
-	DetectorConstruction* fDet;
-	G4UIdirectory*        fMachineDir;
-	G4UIcmdWith3VectorAndUnit* fTableTransCmd; //trans
-	G4UIcmdWithADoubleAndUnit* fTablePivotCmd; //pivot
-	G4UIcmdWith3Vector*        fDetCmd; //primary, secondary, SID
-	G4UIcmdWith3VectorAndUnit* fGlassTransCmd;
-	G4UIcmdWith3Vector*        fGlassRotCmd; // axis * angle(in deg)
+	void ReadPostureData(G4String fileName);
 
-	G4ThreeVector tableTrans, glassTrans, glassAxis;
-	G4double tablePivot, glassTheta;
-	
+private:
+	ParallelPhantom* fPhantom;
+	G4UIdirectory*   fPhantomDir;
+	G4UIcmdWithAnInteger* fDeformCmd; 
+
+	vector<RotationList> vQ_vec;
+	vector<Vector3d> roots;
 };
 
 #endif

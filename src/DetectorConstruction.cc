@@ -186,7 +186,7 @@ G4LogicalVolume* DetectorConstruction::ConstructPatient()
 		}
 		G4LogicalVolume* lv_tet = new G4LogicalVolume(tet, mat, "tet");
 		new G4PVPlacement(0, G4ThreeVector(), lv_tet, "tet", lv_phantomBox, false, 0);
-		lv_tet->SetVisAttributes(G4VisAttributes::Invisible);
+		lv_tet->SetVisAttributes(G4VisAttributes::Invisible());
 	}
 	ifsEle.close();
 	return lv_phantomBox;

@@ -31,7 +31,6 @@
 #include "G4UIcmdWith3Vector.hh"
 #include "G4UIcmdWith3VectorAndUnit.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"
-#include "G4UIcmdWithoutParameter.hh"
 #include "G4RunManager.hh"
 #include <sstream>
 #include <vector>
@@ -50,7 +49,6 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* _det)
 	fDetCmd = new G4UIcmdWith3Vector("/machine/c-arm", this);
 	fGlassTransCmd = new G4UIcmdWith3VectorAndUnit("/machine/glassTrans", this);
 	fGlassRotCmd = new G4UIcmdWith3Vector("/machine/glassRot", this);
-	fCloseCmd = new G4UIcmdWithoutParameter("/machine/close", this);
 
 	fTableTransCmd->SetDefaultUnit("cm");
 	fTablePivotCmd->SetDefaultUnit("deg");
@@ -68,7 +66,6 @@ DetectorMessenger::~DetectorMessenger() {
 	delete fDetCmd; //primary, secondary, sid
 	delete fGlassTransCmd;
 	delete fGlassRotCmd; // axis * angle(in deg)
-	delete fCloseCmd;
 }
 
 void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
@@ -95,8 +92,8 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
 		glassAxis = rot.unit();
 		fDet->SetGlassPose(glassTrans, glassAxis, glassTheta);
 	}
-	else if(command == fCloseCmd){
-		G4RunManager::GetRunManager()->GeometryHasBeenModified();
-	}
+	// else if(command == fCloseCmd){
+	// 	G4RunManager::GetRunManager()->GeometryHasBeenModified();
+	// }
 }
 

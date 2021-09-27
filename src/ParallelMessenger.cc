@@ -23,43 +23,64 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// DetectorMessenger.cc
-// \file   MRCP_GEANT4/External/src/TETModelImport.cc
+// ParallelMessenger.cc
 // \author Haegin Han
 //
 
-#ifndef SRC_DetectorMessenger_HH_
-#define SRC_DetectorMessenger_HH_ 1
+#include "G4UIdirectory.hh"
+#include "G4UIcmdWithAnInteger.hh"
+#include "G4RunManager.hh"
+#include <sstream>
+#include <vector>
+#include "RunAction.hh"
+#include "ParallelMessenger.hh"
+#include "ParallelPhantom.hh"
+#include "G4SystemOfUnits.hh"
+#include "G4RunManager.hh"
 
-#include "globals.hh"
-#include "G4UImessenger.hh"
-
-class G4UIdirectory;
-class G4UIcmdWith3Vector;
-class G4UIcmdWith3VectorAndUnit;
-class G4UIcmdWithADoubleAndUnit;
-class DetectorConstruction;
-
-class DetectorMessenger: public G4UImessenger
+ParallelMessenger::ParallelMessenger(ParallelPhantom* _phantom)
+:G4UImessenger(), fPhantom(_phantom)
 {
-public:
-	DetectorMessenger(DetectorConstruction* det);
-	virtual ~DetectorMessenger();
+	fPhantomDir = new G4UIdirectory("/phantom/");
+	fDeformCmd = new G4UIcmdWithAnInteger("/phantom/frame", this);
+}
 
-	virtual void SetNewValue(G4UIcommand*, G4String);
+ParallelMessenger::~ParallelMessenger() {
+	delete fPhantomDir;
+	delete fDeformCmd; 
+}
 
-private:
-	DetectorConstruction* fDet;
-	G4UIdirectory*        fMachineDir;
-	G4UIcmdWith3VectorAndUnit* fTableTransCmd; //trans
-	G4UIcmdWithADoubleAndUnit* fTablePivotCmd; //pivot
-	G4UIcmdWith3Vector*        fDetCmd; //primary, secondary, SID
-	G4UIcmdWith3VectorAndUnit* fGlassTransCmd;
-	G4UIcmdWith3Vector*        fGlassRotCmd; // axis * angle(in deg)
+void ParallelMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
+{
+	if(command == fDeformCmd){
+		// fPhantom->Deform()
+		// fDet->SetTablePose(tableTrans, tablePivot);
+	}
+}
 
-	G4ThreeVector tableTrans, glassTrans, glassAxis;
-	G4double tablePivot, glassTheta;
-	
-};
+void ParallelMessenger::ReadPostureData(G4String fileName)
+{
+	ifstream ifs(fileName);
+	if(!ifs.is_open())
+	{
+		cout<<"fileName is not open"<<endl;
+	}
+	vQ_vec.clear();
+	roots.clear();
 
-#endif
+	G4String line;
+	while(getline(ifs, line))
+	{
+		if(line.empty()) continue;
+		stringstream ss(line);
+		G4double x, y, z, w;
+		ss>>x>>y>>z;
+		roots.push_back(Vector3d(x,y,z)*cm);
+		RotationList vQ;
+		for(int i=0;i<22;i++)
+		{
+			ss>>w>>x>>y>>z;
+			vQ.push_back(Quaterniond(w, x, y, z));
+		}
+	}
+}
