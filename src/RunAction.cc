@@ -47,7 +47,7 @@ RunAction::~RunAction()
 G4Run* RunAction::GenerateRun()
 {
 	// generate run
-	fRun = new Run(tetData);
+	fRun = new Run();
 	return fRun;
 }
 

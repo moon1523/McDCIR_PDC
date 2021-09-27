@@ -74,12 +74,6 @@ public:
     virtual ~TETModelImport();
 
 	// get methods
-	G4bool        DoseWasOrganized()         { return doseOrganized; }
-	std::map<G4int, std::vector<G4int>>
-	              GetDoseMap()               { return organ2dose;}
-	G4String      GetDoseName(G4int doseID)  { return doseName[doseID];}
-	std::map<G4int, G4double> GetDoseMassMap(){ return doseMassMap; }
-
     G4String      GetPhantomName()           { return phantomName; }
 	G4Material*   GetMaterial(G4int idx)     { return materialMap[idx];}
 	size_t        GetNumTetrahedron()        { return tetVector.size();}
@@ -96,24 +90,7 @@ public:
 	G4double GetRBMDRF(G4int idx, G4int eIdx){ return rbmDRF[idx][eIdx];}
 	G4double GetBSDRF (G4int idx, G4int eIdx){ return bsDRF[idx][eIdx];}
 
-    // std::vector<std::vector<G4int>> GetElements(G4int organID){
-    //     std::vector<std::vector<G4int>> eleVec;
-    //     for(size_t i=0;i<materialVector.size();i++){
-    //         if(materialVector[i]!=organID) continue;
-    //         std::vector<G4int> ele = {eleVector[i][0],
-    //                                   eleVector[i][1],
-    //                                   eleVector[i][2],
-    //                                   eleVector[i][3]};
-    //         std::sort(ele.begin(), ele.end());
-    //         eleVec.push_back(ele);
-    //     }
-    //     return eleVec;
-    // }
-	//
     void Deform(RotationList vQ, Vector3d root);
-
-
-
 
 private:
 	// private methods
@@ -136,7 +113,7 @@ private:
 		return atoi(token.c_str());
 	}
 
-	G4ThreeVector RowToG4Vec(RowVector3d row){return G4ThreeVector(row(0), row(1), row(2));}
+	G4ThreeVector RowToG4Vec(const RowVector3d& row){return G4ThreeVector(row(0), row(1), row(2));}
 	void UpdateBBox()
 	{
 		RowVector3d max = animator->GetU().colwise().maxCoeff();
@@ -149,11 +126,6 @@ private:
 
 	G4ThreeVector boundingBox_Min;
 	G4ThreeVector boundingBox_Max;
-
-	std::map<G4int, std::vector<G4int>>   organ2dose;
-	std::map<G4int, G4String>  doseName;
-	std::map<G4int, G4double>  doseMassMap;
-	G4bool                     doseOrganized;
 
 	std::vector<G4Tet*>        tetVector;
 	std::vector<G4int>         materialVector;
@@ -171,8 +143,6 @@ private:
 	std::map<G4int, G4Material*>                             materialMap;
 	std::map<G4int, G4double>                                densityMap;
 	std::map<G4int, G4String>                                organNameMap;
-
-
 
 	// Phantom Animator
 	PhantomAnimator* animator;

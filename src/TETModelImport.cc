@@ -28,7 +28,6 @@
 #include "TETModelImport.hh"
 
 TETModelImport::TETModelImport(G4String _phantomName)
-:doseOrganized(false)
 {
 	// set phantom name
 	phantomName = _phantomName;
@@ -64,65 +63,12 @@ void TETModelImport::Deform(RotationList vQ, Vector3d root)
 	MatrixXi T = animator->GetT();
 	MatrixXd U = animator->GetU();
 	G4ThreeVector center = (boundingBox_Max + boundingBox_Min)*0.5;
+	G4double vol(0);
 	for (G4int i=0; i<T.rows(); i++)
+	{
 		tetVector[i]->SetVertices(RowToG4Vec(U.row(T(i,0)))-center,RowToG4Vec(U.row(T(i,1)))-center,RowToG4Vec(U.row(T(i,2)))-center,RowToG4Vec(U.row(T(i,3)))-center);
-}
-
-// void TETModelImport::ReadFrameRecord()
-// {
-// 	ifstream ifs("../phantoms/record.txt");
-// 	if(!ifs.is_open()) {
-// 		cerr << "record file is not opened" << endl;
-// 		exit(1);
-// 	}
-
-// 	int frameNo(0);
-
-// 	string dump;
-// 	while (getline(ifs, dump))
-// 	{
-// 		stringstream ss(dump);
-// 		Vector3d position;
-// 		ss >> position(0) >> position(1) >> position(2);
-// 		rootPosition.push_back(position);
-
-// 		vector<Quaterniond,aligned_allocator<Quaterniond>> qVec;
-// 		qVec.clear();
-// 		Quaterniond q;
-// 		for (int i=0; i<22; i++) {
-// 			ss >> q.w() >> q.x() >> q.y() >> q.z();
-// 			qVec.push_back(q);
-// 		}
-// 		boneQuat.push_back(qVec);
-
-// 		frameNo++;
-// 	}
-
-// 	ifs.close();
-// }
-
-
-void TETModelImport::DoseRead(G4String doseFile){
-	//read dose file : PLEASE be careful not to include dose ID 0
-	std::ifstream ifs(doseFile);
-	if(!ifs.is_open()) return;
-	doseOrganized = true;
-
-	G4String aLine;
-	while(!ifs.eof()){
-		getline(ifs, aLine);
-		if(aLine.empty()) break;
-
-		std::stringstream ss(aLine);
-		G4int doseID; ss>>doseID;
-		G4String name; ss>>name; doseName[doseID] = name;
-		G4int organID;
-		while(ss>>organID){
-			if(organ2dose.find(organID)==organ2dose.end()) organ2dose[organID] = {doseID};
-			else	                                       organ2dose[organID].push_back(doseID);
-		}
+		vol += tetVector[i]->GetCubicVolume();
 	}
-	ifs.close();
 }
 
 void TETModelImport::ConstructTet()
@@ -224,16 +170,6 @@ void TETModelImport::MaterialRead(G4String materialFile)
 		}
 		materialMap[idx]=mat;
 		massMap[idx]=densityMap[idx]*volumeMap[idx];
-	}
-
-	if(DoseWasOrganized()){
-		for(auto dm:doseName){
-			doseMassMap[dm.first] = 0;
-		}
-		for(auto od:organ2dose){
-			for(auto doseID:od.second)
-				doseMassMap[doseID] += massMap[od.first];
-		}
 	}
 }
 

@@ -26,7 +26,7 @@
 
 #include "Run.hh"
 
-Run::Run(TETModelImport* tetData)
+Run::Run()
 :G4Run()
 {
 	edepMap.clear();
