@@ -31,6 +31,7 @@
 #include <Eigen/StdVector>
 #include <Eigen/SparseCore>
 
+#include "G4GeometryTolerance.hh"
 
 class PhantomAnimator
 {
@@ -40,65 +41,51 @@ public:
     PhantomAnimator(string prefix);
     ~PhantomAnimator();
 
-    bool ReadFiles(string prefix);
-    bool Initialize();
+    void ReadTetMesh(string prefix);
+    void PreparePhantom(string prefix);
+    // bool ReadFiles(string prefix);
     string CalibrateTo(string name);
-    void Animate(RotationList vQ, const MatrixXd &C_disp, MatrixXd &C_new, bool calibChk = true);
-    void Animate(RotationList vQ, MatrixXd &V_new);
+    void Animate(RotationList vQ, Vector3d root);
 
-    void GetMeshes(MatrixXd &_V, MatrixXi &_F, MatrixXd &_C, MatrixXi &_BE){
-        _V = V; _F = F; _C = C; _BE = BE;
-    }
-    MatrixXd GetV(){ return V; }
-    MatrixXd GetV_calib(){ return V_calib; }
     MatrixXd GetU(){ return U; }
-    MatrixXi GetF(){ return F; }
-    MatrixXd GetC(){ return C; }
-    MatrixXd GetC_calib(){ return C_calib; }
-    MatrixXi GetBE(){ return BE; }
-    RotationList GetAlignRot() {return alignRot;}
+    MatrixXi GetT(){ return T; }
 
-public:
     bool ReadProfileData(string fileName);
-    bool WriteProfileData(string fileName);
-    int AddProfile(map<int, double> calibLengths, Vector3d eyeL_pos, Vector3d eyeR_pos, string name){
-        auto iter = profileIDs.insert(make_pair(name, jointLengths.size()));
-        jointLengths.push_back(calibLengths);
-        eyeL_vec.push_back(eyeL_pos);
-        eyeR_vec.push_back(eyeR_pos);
-        return distance(profileIDs.begin(), iter.first);
-    }
-    vector<string> GetProfileNames()
-    {
-        vector<string> names;
-        for(auto iter:profileIDs) names.push_back(iter.first);
-        return names;
-    }
-    bool AlreadyExists(string name)
-    {
-        if(profileIDs.find(name)==profileIDs.end()) return false;
-        else return true;
-    }
-    map<string, int> profileIDs;
-    vector<map<int, double>> jointLengths;
-    vector<Vector3d> eyeR_vec, eyeL_vec;
 
 //variables
 private:
     MatrixXd C, V, U, W, Wj;
-    MatrixXi BE, T, F;
+    MatrixXi BE, T;
     VectorXi P;
     MatrixXd V_calib, C_calib;
     vector<int> eyeIDs;
-    // vector<int> eye2ply;
-    RotationList alignRot;
     vector<map<int, double>> cleanWeights;
-
-    //tmp
     map<int, double> lengths;
 
-    // name
-    vector<string> boneName;
+    map<string, int> profileIDs;
+    vector<map<int, double>> jointLengths;
+    vector<Vector3d> eyeR_vec, eyeL_vec;
+
+    vector<int> CheckDegeneracy(const MatrixXd& VV, const MatrixXi& TT)
+    {
+        double tol = G4GeometryTolerance::GetInstance()->GetSurfaceTolerance()*8./3.;
+    
+        MatrixXd A;
+        igl::face_areas(VV, TT, A);
+        VectorXd Amax = A.rowwise().maxCoeff();
+        VectorXd vol;
+        igl::volume(VV, TT, vol);
+        vol = vol.array().abs();
+
+        vector<int> degen;
+        for(int i=0;i<T.rows();i++)
+        {
+            if(vol(i)<Amax(i)*tol)
+                degen.push_back(i);
+        }
+        return degen;
+    }
+
 };
 
 #endif

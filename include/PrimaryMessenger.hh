@@ -23,75 +23,40 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+// PrimaryMessenger.cc
+// \file   MRCP_GEANT4/External/src/TETModelImport.cc
+// \author Haegin Han
 //
 
-#ifndef PrimaryGeneratorAction_hh
-#define PrimaryGeneratorAction_hh 1
+#ifndef SRC_PrimaryMESSENGER_HH_
+#define SRC_PrimaryMESSENGER_HH_ 1
 
-#include "G4VUserPrimaryGeneratorAction.hh"
 #include "globals.hh"
-#include "G4Event.hh"
-#include "G4ParticleGun.hh"
-#include "G4SystemOfUnits.hh"
-#include "G4RotationMatrix.hh"
-#include "G4RandomDirection.hh"
-#include "TETModelImport.hh"
+#include "G4UImessenger.hh"
+#include "PrimaryGeneratorAction.hh"
 
-#include <map>
-#include <algorithm>
+class G4UIdirectory;
+class G4UIcmdWithAString;
+class G4UIcmdWith3Vector;
+class G4UIcmdWithAnInteger;
 
-using namespace std;
-
-class PrimaryMessenger;
-
-enum DetectorZoomField
-{
-  FD48,
-  FD42,
-  FD37,
-  FD31,
-  FD27,
-  FD23,
-  FD19,
-  FD16
-};
-
-class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
+class PrimaryMessenger: public G4UImessenger
 {
 public:
-  PrimaryGeneratorAction();
-  virtual ~PrimaryGeneratorAction();
+	PrimaryMessenger(PrimaryGeneratorAction* primary);
+	virtual ~PrimaryMessenger();
 
-  virtual void GeneratePrimaries(G4Event *);
-
-  G4ParticleGun *GetParticleGun() const { return fPrimary; }
-  void SetSourceEnergy(G4int peakE); //peakE in keV
-
-  void FlatDetectorInitialization(DetectorZoomField FD, G4double SID);
-  void SetCarmAngles(G4double primary, G4double secondary)
-  // carm_primary = 20 * deg;   // +LAO, -RAO
-  // carm_secondary = 20 * deg; // +CAU, -CRA
-  {
-    rotate.setTheta(0);
-    rotate.rotateY(primary).rotateX(secondary);
-
-    G4ThreeVector focalSpot = rotate * G4ThreeVector(0, 0, -810*mm); //what is 810?
-    fPrimary->SetParticlePosition(focalSpot + isocenter);
-  }
-
-  G4ThreeVector SampleRectangularBeamDirection();
+	virtual void SetNewValue(G4UIcommand*, G4String);
 
 private:
-  G4ParticleGun *fPrimary;
-  G4double angle1, angle2;
-  G4RotationMatrix rotate;
-  G4ThreeVector isocenter;
+	PrimaryGeneratorAction*    fPrimary;
+	G4UIdirectory*             fBeamDir;
+	G4UIcmdWithAString*        fFDCmd;
+	G4UIcmdWith3Vector*        fBeamCmd;
+	G4UIcmdWithAnInteger*      fPeakEnergyCmd;
 
-  // Energy
-  map<G4double, G4double> cdf;
-
-  //messenger
-  PrimaryMessenger *messenger;
+	DetectorZoomField fd;
+	G4double sid;
 };
 
 #endif

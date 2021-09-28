@@ -38,114 +38,75 @@
 #include "G4NistManager.hh"
 
 #include "G4Box.hh"
-#include "G4Tet.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 #include "G4PVParameterised.hh"
-#include "G4Sphere.hh"
-
-#include "G4SDManager.hh"
-#include "G4MultiFunctionalDetector.hh"
-#include "G4SystemOfUnits.hh"
-#include "G4VisAttributes.hh"
-#include "G4GeometryManager.hh"
-
-#include "TETModelImport.hh"
-#include "G4PSEnergyDeposit.hh"
-
-
-// *********************************************************************
-// This is UserDetectorConstruction class that defines geometry
-// -- Construct: construct Geometry by three methods listed below.
-//  └-- SetupWorldGeometry: Defines the world box (10*10*10 m3) and,
-//                          phantom container which has 10 cm-margins from
-//                          the bounding box of phantom
-//  └-- ConstructPhantom: Define the phantom geometry by using
-//                        G4PVParameterised class
-//  └-- PrintPhantomInformation: Print overall phantom information
-//
-// -- ConstructSDandField: Setup the MultiFunctionalDetector with energy
-//                         deposition scorer, and attach it to phantom
-//                         geometry
-// *********************************************************************
-
+#include "DetectorMessenger.hh"
 
 class DetectorConstruction : public G4VUserDetectorConstruction
 {
 public:
-    DetectorConstruction(TETModelImport* tetData);
+    DetectorConstruction();
     virtual ~DetectorConstruction();
 
     virtual G4VPhysicalVolume* Construct();
-    virtual void ConstructSDandField();
 
-    // Access function to 4D calculation
-    //
     // Operating Table
-    void SetTableOCR(G4ThreeVector _table_ocr) { table_ocr = _table_ocr; }
-    void SetTablePivotAngle(G4double _table_pivot_angle) { table_pivot_angle = _table_pivot_angle; }
+    void SetTablePose(G4ThreeVector table_trans, G4double table_pivot_angle) 
+	//_table_trans is the translation from when rotation center is at the center of the table
+	{  
+		frame_rotation_matrix->setTheta(table_pivot_angle);
+		pv_frame->SetTranslation(frame_ralative_to_table + table_rotation_center + frame_rotation_matrix->inverse() * table_trans);
+	}
+
     // Glass
-    void SetGlassTranslation(G4ThreeVector _glass_translation) { glass_translation = _glass_translation; }
-    void SetGlassRotation(Quaterniond _glass_quaternion) {
-    	if (glass_rotation_matrix) delete glass_rotation_matrix;
-    	MatrixXd mat = _glass_quaternion.matrix();
-    	G4ThreeVector col1(mat(0,0), mat(1,0), mat(2,0));
-    	G4ThreeVector col2(mat(0,1), mat(1,1), mat(2,1));
-    	G4ThreeVector col3(mat(0,2), mat(1,2), mat(2,2));
-    	glass_rotation_matrix = new G4RotationMatrix(-col1,-col2,-col3);
+    void SetGlassPose(G4ThreeVector _glass_trans, G4ThreeVector _glass_axis, G4double _glass_theta) 
+	{
+		pv_glass->SetTranslation(_glass_trans);
+		pv_glass->GetRotation()->setAxis(_glass_axis);
+		pv_glass->GetRotation()->setTheta(-_glass_theta);
     }
-    // C-arm will be updated
+
+    // C-arm det
+    void SetCarmDetPose(G4double _carm_primary, G4double _carm_secondary, G4double _carm_sid) 
+	// 	carm_primary: rao, lao | carm_secondary: cran, caud
+	{
+		carm_rotation_matrix->setTheta(0); //set identity
+		carm_rotation_matrix->rotateY(_carm_primary).rotateX(_carm_secondary);
+		carm_rotation_matrix->invert();
+		pv_det->SetTranslation(carm_rotation_matrix->inverse()*G4ThreeVector(0,0,_carm_sid) + carm_isocenter);
+    }
 
 
 private:
     void SetupWorldGeometry();
-	void ConstructPhantom();
-	void PrintPhantomInformation();
 
 	void ConstructOperatingTable();
-	void ConstructPatient();
-	void ConstructCarm();
+	G4LogicalVolume* ConstructPatient();
+	void ConstructCarmDet();
 	void ConstructPbGlass();
 
 	G4LogicalVolume*   worldLogical;
 	G4VPhysicalVolume* worldPhysical;
-	G4LogicalVolume*   container_logic;
-	G4VPhysicalVolume* container_phy;
-
-	TETModelImport*    tetData;
-
-	G4ThreeVector      phantomSize;
-	G4ThreeVector      phantomBoxMin, phantomBoxMax;
-	G4int              nOfTetrahedrons;
-
-
-	// Material
-	G4Material* vacuum;
-	G4Material* water;
-	G4Material* lead;
-	G4Material* carbonfiber;
-
-	// Radiologist
-	G4ThreeVector doctor_translation;
-	G4LogicalVolume* lv_doctor;
-	G4VPhysicalVolume* pv_doctor;
 
 	// Operating Table
-	G4ThreeVector table_ocr;
-	G4double table_pivot_angle;
+	G4VPhysicalVolume* pv_frame;
 	G4ThreeVector table_rotation_center;
-	G4RotationMatrix* table_rotation_matrix;
-	G4RotationMatrix* table_rotation_matrix2;
+	G4RotationMatrix* frame_rotation_matrix; //inverse
 	G4ThreeVector table_translation;
+	G4ThreeVector frame_ralative_to_table;
 
 	// Glass
-	G4ThreeVector glass_translation;
-	G4RotationMatrix* glass_rotation_matrix;
+	G4VPhysicalVolume* pv_glass;
 
 	// C-arm
+	G4VPhysicalVolume* pv_det;
 	G4ThreeVector carm_isocenter;
-	G4double carm_primary;
-	G4double carm_secondary;
+	G4RotationMatrix* carm_rotation_matrix; //inverse
+
+	//messenger
+	DetectorMessenger* messenger;
+	
 };
 
 

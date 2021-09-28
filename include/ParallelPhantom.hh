@@ -23,75 +23,39 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+// \author: Haegin Han
 //
+#ifndef ParallelPhantom_h
+#define ParallelPhantom_h 1
 
-#ifndef PrimaryGeneratorAction_hh
-#define PrimaryGeneratorAction_hh 1
-
-#include "G4VUserPrimaryGeneratorAction.hh"
+#include "G4VUserParallelWorld.hh"
 #include "globals.hh"
-#include "G4Event.hh"
-#include "G4ParticleGun.hh"
-#include "G4SystemOfUnits.hh"
-#include "G4RotationMatrix.hh"
-#include "G4RandomDirection.hh"
 #include "TETModelImport.hh"
 
-#include <map>
-#include <algorithm>
+class G4LogicalVolume;
+class G4VPhysicalVolume;
+class ParallelMessenger;
 
-using namespace std;
-
-class PrimaryMessenger;
-
-enum DetectorZoomField
-{
-  FD48,
-  FD42,
-  FD37,
-  FD31,
-  FD27,
-  FD23,
-  FD19,
-  FD16
-};
-
-class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
+class ParallelPhantom : public G4VUserParallelWorld
 {
 public:
-  PrimaryGeneratorAction();
-  virtual ~PrimaryGeneratorAction();
+  ParallelPhantom(G4String parallelWorldName, TETModelImport* _tetData);
+  virtual ~ParallelPhantom();
 
-  virtual void GeneratePrimaries(G4Event *);
-
-  G4ParticleGun *GetParticleGun() const { return fPrimary; }
-  void SetSourceEnergy(G4int peakE); //peakE in keV
-
-  void FlatDetectorInitialization(DetectorZoomField FD, G4double SID);
-  void SetCarmAngles(G4double primary, G4double secondary)
-  // carm_primary = 20 * deg;   // +LAO, -RAO
-  // carm_secondary = 20 * deg; // +CAU, -CRA
-  {
-    rotate.setTheta(0);
-    rotate.rotateY(primary).rotateX(secondary);
-
-    G4ThreeVector focalSpot = rotate * G4ThreeVector(0, 0, -810*mm); //what is 810?
-    fPrimary->SetParticlePosition(focalSpot + isocenter);
-  }
-
-  G4ThreeVector SampleRectangularBeamDirection();
+public:
+  virtual void Construct();
+  virtual void ConstructSD();
+  void Deform(RotationList vQ, Vector3d root);
 
 private:
-  G4ParticleGun *fPrimary;
-  G4double angle1, angle2;
-  G4RotationMatrix rotate;
-  G4ThreeVector isocenter;
+  G4bool fConstructed;
+  ParallelMessenger* messenger;
 
-  // Energy
-  map<G4double, G4double> cdf;
-
-  //messenger
-  PrimaryMessenger *messenger;
+  // Radiologist
+  TETModelImport*    tetData;
+  G4ThreeVector      doctor_translation;
+  G4LogicalVolume*   lv_tet;
+  G4VPhysicalVolume* pv_doctor;
 };
 
 #endif

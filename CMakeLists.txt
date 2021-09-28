@@ -1,5 +1,5 @@
 # Set the minimum required version of cmake for a project.
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.10)
 
 # Set Variables
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -31,24 +31,22 @@ endif()
 # Setup Geant4 include directories and compile definitions
 # Setup include directory for this project
 #
+# libigl
+option(LIBIGL_WITH_TETGEN            "Use TetGen"         ON)
+find_package(LIBIGL REQUIRED QUIET)
+set(LIBIGL_DIR ${LIBIGL_INCLUDE_DIR}/..)
 include(${Geant4_USE_FILE})
-include_directories(${PROJECT_SOURCE_DIR}/src
-		    ${PROJECT_SOURCE_DIR}/include
+include_directories(${PROJECT_SOURCE_DIR}/include
 		    #${MARIADB_INCLUDE_DIR}
 		    #${LIBSSH_INCLUDE_DIR}
 		    ${LIBIGL_DIR}
                     ${LIBIGL_DIR}/external
-                    ${LIBIGL_DIR}/external/libigl-imgui/
-                    ${LIBIGL_DIR}/external/imgui/examples/
-                    ${LIBIGL_DIR}/external/imgui/
-                    ${LIBIGL_DIR}/external/glfw/include
                     ${LIBIGL_DIR}/external/glad/include
 		    )
 
 # File
-FILE(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cc)
-FILE(GLOB HEADER_FILES ${PROJECT_SOURCE_DIR}/include/*.hh
-		       ${PROJECT_SOURCE_DIR}/include/*.h)
+FILE(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
+FILE(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 	               
 # openMP
 FIND_PACKAGE(OpenMP)
@@ -58,12 +56,6 @@ if (OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
-# libigl
-option(LIBIGL_WITH_OPENGL            "Use OpenGL"         ON)
-option(LIBIGL_WITH_OPENGL_GLFW       "Use GLFW"           ON)
-option(LIBIGL_WITH_OPENGL_GLFW_IMGUI "Use imgui"           ON)
-option(LIBIGL_WITH_TETGEN            "Use TetGen"         ON)
-include(libigl)
 
 # MariaDB
 #FIND_LIBRARY(MARIADB_LIB
@@ -82,7 +74,7 @@ include(libigl)
 #endif()
 
 # The main program
-add_executable(${PROJECT_NAME} calculator.cpp ${SRC_FILES} ${HEADER_FILES})
+add_executable(${PROJECT_NAME} calculator.cpp ${sources} ${headers})
 
 # Link
 target_link_libraries( ${PROJECT_NAME} 
@@ -91,7 +83,5 @@ target_link_libraries( ${PROJECT_NAME}
 	#${LIBSSH_LIB} 
 	${Geant4_LIBRARIES}
 	igl::core
-	igl::opengl
-	igl::opengl_glfw_imgui
 	igl::tetgen
 	)

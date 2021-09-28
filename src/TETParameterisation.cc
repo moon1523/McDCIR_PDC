@@ -23,75 +23,55 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+// TETParameterisation.cc
+// \file   MRCP_GEANT4/External/src/TETParameterisation.cc
+// \author Haegin Han
 //
 
-#ifndef PrimaryGeneratorAction_hh
-#define PrimaryGeneratorAction_hh 1
+#include "TETParameterisation.hh"
+#include "G4LogicalVolume.hh"
+#include "G4VisExecutive.hh"
+#include "G4RunManager.hh"
 
-#include "G4VUserPrimaryGeneratorAction.hh"
-#include "globals.hh"
-#include "G4Event.hh"
-#include "G4ParticleGun.hh"
-#include "G4SystemOfUnits.hh"
-#include "G4RotationMatrix.hh"
-#include "G4RandomDirection.hh"
-#include "TETModelImport.hh"
-
-#include <map>
-#include <algorithm>
-
-using namespace std;
-
-class PrimaryMessenger;
-
-enum DetectorZoomField
+TETParameterisation::TETParameterisation(TETModelImport* _tetData)
+: G4VPVParameterisation(), tetData(_tetData)
 {
-  FD48,
-  FD42,
-  FD37,
-  FD31,
-  FD27,
-  FD23,
-  FD19,
-  FD16
-};
+	// initialise visAttMap which contains G4VisAttributes* for each organ
+	auto colourMap =  tetData->GetColourMap();
+	for(auto colour : colourMap){
+		visAttMap[colour.first] = new G4VisAttributes(colour.second);
+	}
 
-class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
+	if(colourMap.size()) isforVis = true;
+	else                 isforVis = false;
+}
+
+TETParameterisation::~TETParameterisation()
+{}
+
+G4VSolid* TETParameterisation::ComputeSolid(
+    		       const G4int copyNo, G4VPhysicalVolume* )
 {
-public:
-  PrimaryGeneratorAction();
-  virtual ~PrimaryGeneratorAction();
+	// return G4Tet*
+    return tetData->GetTetrahedron(copyNo);
+}
 
-  virtual void GeneratePrimaries(G4Event *);
+void TETParameterisation::ComputeTransformation(
+                   const G4int,G4VPhysicalVolume*) const
+{}
 
-  G4ParticleGun *GetParticleGun() const { return fPrimary; }
-  void SetSourceEnergy(G4int peakE); //peakE in keV
+G4Material* TETParameterisation::ComputeMaterial(const G4int copyNo,
+                                                 G4VPhysicalVolume* phy,
+                                                 const G4VTouchable* )
+{
+   // set the colour for each organ if visualization is required
+	if(isforVis){
+		G4int idx = tetData->GetMaterialIndex(copyNo);
+		phy->GetLogicalVolume()->SetVisAttributes(visAttMap[idx]);
+	}
 
-  void FlatDetectorInitialization(DetectorZoomField FD, G4double SID);
-  void SetCarmAngles(G4double primary, G4double secondary)
-  // carm_primary = 20 * deg;   // +LAO, -RAO
-  // carm_secondary = 20 * deg; // +CAU, -CRA
-  {
-    rotate.setTheta(0);
-    rotate.rotateY(primary).rotateX(secondary);
+	// return the material data for each material index
+	return tetData->GetMaterial(tetData->GetMaterialIndex(copyNo));
+}
 
-    G4ThreeVector focalSpot = rotate * G4ThreeVector(0, 0, -810*mm); //what is 810?
-    fPrimary->SetParticlePosition(focalSpot + isocenter);
-  }
 
-  G4ThreeVector SampleRectangularBeamDirection();
-
-private:
-  G4ParticleGun *fPrimary;
-  G4double angle1, angle2;
-  G4RotationMatrix rotate;
-  G4ThreeVector isocenter;
-
-  // Energy
-  map<G4double, G4double> cdf;
-
-  //messenger
-  PrimaryMessenger *messenger;
-};
-
-#endif

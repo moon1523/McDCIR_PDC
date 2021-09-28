@@ -23,75 +23,73 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+// ParallelMessenger.cc
+// \author Haegin Han
 //
 
-#ifndef PrimaryGeneratorAction_hh
-#define PrimaryGeneratorAction_hh 1
-
-#include "G4VUserPrimaryGeneratorAction.hh"
-#include "globals.hh"
-#include "G4Event.hh"
-#include "G4ParticleGun.hh"
+#include "G4UIdirectory.hh"
+#include "G4UIcmdWithAnInteger.hh"
+#include "G4UIcmdWithAString.hh"
+#include "G4RunManager.hh"
+#include <sstream>
+#include <vector>
+#include "RunAction.hh"
+#include "ParallelMessenger.hh"
+#include "ParallelPhantom.hh"
 #include "G4SystemOfUnits.hh"
-#include "G4RotationMatrix.hh"
-#include "G4RandomDirection.hh"
-#include "TETModelImport.hh"
+#include "G4RunManager.hh"
 
-#include <map>
-#include <algorithm>
-
-using namespace std;
-
-class PrimaryMessenger;
-
-enum DetectorZoomField
+ParallelMessenger::ParallelMessenger(ParallelPhantom* _phantom)
+:G4UImessenger(), fPhantom(_phantom)
 {
-  FD48,
-  FD42,
-  FD37,
-  FD31,
-  FD27,
-  FD23,
-  FD19,
-  FD16
-};
+	fPhantomDir = new G4UIdirectory("/phantom/");
+	fDeformCmd = new G4UIcmdWithAnInteger("/phantom/frame", this);
+	fDataReadCmd = new G4UIcmdWithAString("/phantom/data", this);
 
-class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
+}
+
+ParallelMessenger::~ParallelMessenger() {
+	delete fPhantomDir;
+	delete fDeformCmd; 
+	delete fDataReadCmd;
+}
+
+void ParallelMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
 {
-public:
-  PrimaryGeneratorAction();
-  virtual ~PrimaryGeneratorAction();
+	if(command == fDeformCmd){
+		G4int i = fDeformCmd->GetNewIntValue(newValue);
+		fPhantom->Deform(vQ_vec[i], roots[i]);
+	}
+	else if(command == fDataReadCmd){
+		ReadPostureData(newValue);
+	}
+}
 
-  virtual void GeneratePrimaries(G4Event *);
+void ParallelMessenger::ReadPostureData(G4String fileName)
+{
+	ifstream ifs(fileName);
+	if(!ifs.is_open())
+	{
+		cout<<"fileName is not open"<<endl;
+	}
+	vQ_vec.clear();
+	roots.clear();
 
-  G4ParticleGun *GetParticleGun() const { return fPrimary; }
-  void SetSourceEnergy(G4int peakE); //peakE in keV
-
-  void FlatDetectorInitialization(DetectorZoomField FD, G4double SID);
-  void SetCarmAngles(G4double primary, G4double secondary)
-  // carm_primary = 20 * deg;   // +LAO, -RAO
-  // carm_secondary = 20 * deg; // +CAU, -CRA
-  {
-    rotate.setTheta(0);
-    rotate.rotateY(primary).rotateX(secondary);
-
-    G4ThreeVector focalSpot = rotate * G4ThreeVector(0, 0, -810*mm); //what is 810?
-    fPrimary->SetParticlePosition(focalSpot + isocenter);
-  }
-
-  G4ThreeVector SampleRectangularBeamDirection();
-
-private:
-  G4ParticleGun *fPrimary;
-  G4double angle1, angle2;
-  G4RotationMatrix rotate;
-  G4ThreeVector isocenter;
-
-  // Energy
-  map<G4double, G4double> cdf;
-
-  //messenger
-  PrimaryMessenger *messenger;
-};
-
-#endif
+	G4String line;
+	while(getline(ifs, line))
+	{
+		if(line.empty()) continue;
+		stringstream ss(line);
+		G4double x, y, z, w;
+		ss>>x>>y>>z;
+		roots.push_back(Vector3d(x,y,z)*cm);
+		RotationList vQ;
+		for(int i=0;i<22;i++)
+		{
+			ss>>w>>x>>y>>z;
+			vQ.push_back(Quaterniond(w, x, y, z));
+		}
+		vQ_vec.push_back(vQ);
+	}
+	ifs.close();
+}

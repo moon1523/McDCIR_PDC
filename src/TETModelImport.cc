@@ -27,8 +27,7 @@
 
 #include "TETModelImport.hh"
 
-TETModelImport::TETModelImport(G4String _phantomName, G4UIExecutive* ui)
-:doseOrganized(false)
+TETModelImport::TETModelImport(G4String _phantomName)
 {
 	// set phantom name
 	phantomName = _phantomName;
@@ -37,254 +36,59 @@ TETModelImport::TETModelImport(G4String _phantomName, G4UIExecutive* ui)
 	G4cout << "\t" << phantomName << " was implemented in this CODE!!   "<< G4endl;
 	G4cout << "================================================================================"<<G4endl;
 
-	G4String eleFile      =  phantomName + ".ele";
-	G4String nodeFile     =  phantomName + ".node";
 	G4String materialFile =  phantomName + ".material";
 	G4String doseFile     =  phantomName + ".dose";
 	G4String boneFile     =  phantomName + ".RBMnBS";
 	G4String drfFile      =  phantomName + ".DRF";
-	G4String mtlFile      =  phantomName + ".mtl";
 
-	tess = 0;
 	animator = new PhantomAnimator(phantomName);
-	animator->Initialize();
 	animator->CalibrateTo("S_Moon");
+	UpdateBBox();
 
-
-	ReadFrameRecord(); // will be revised to use SQL server.
+	ConstructTet();
+	MaterialRead(materialFile);
+	PrintMaterialInfomation();
 }
 
 TETModelImport::~TETModelImport()
-{
-	delete tess;
+{ 
 	delete animator;
 }
 
-void TETModelImport::Deform(int frameNo)
+void TETModelImport::Deform(RotationList vQ, Vector3d root)
 {
-	tess = new G4TessellatedSolid();
-	vertexVector.clear();
-	RotationList vQ;
-	MatrixXd root, C_new, U;
+	animator->Animate(vQ, root);
+	UpdateBBox();
 
-	G4ThreeVector trans;
-
-	if ( frameNo < 0 ) {
-		U = animator->GetV_calib();
-		trans = G4ThreeVector(0,0,0);
-	}
-	else
+	MatrixXi T = animator->GetT();
+	MatrixXd U = animator->GetU();
+	G4ThreeVector center = (boundingBox_Max + boundingBox_Min)*0.5;
+	G4double vol(0);
+	for (G4int i=0; i<T.rows(); i++)
 	{
-		vQ = boneQuat[frameNo];
-		root = rootPosition[frameNo].matrix().transpose();
-		trans = G4ThreeVector(rootPosition[frameNo](0), rootPosition[frameNo](1), rootPosition[frameNo](2));
-		C_new = animator->GetC();
-		animator->Animate(vQ, root, C_new, true);
-		U = animator->GetU();
+		tetVector[i]->SetVertices(RowToG4Vec(U.row(T(i,0)))-center,RowToG4Vec(U.row(T(i,1)))-center,RowToG4Vec(U.row(T(i,2)))-center,RowToG4Vec(U.row(T(i,3)))-center);
+		vol += tetVector[i]->GetCubicVolume();
 	}
-
-	G4double xPos, yPos, zPos;
-	G4double xMin(DBL_MAX), yMin(DBL_MAX), zMin(DBL_MAX);
-	G4double xMax(DBL_MIN), yMax(DBL_MIN), zMax(DBL_MIN);
-	for (size_t i=0; i<U.rows(); i++)
-	{
-		xPos = ( U(i,0) - trans.getX() ) * cm;
-		yPos = ( U(i,1) - trans.getY() ) * cm;
-		zPos = ( U(i,2) - trans.getZ() ) * cm;
-		vertexVector.push_back( G4ThreeVector( xPos, yPos, zPos ) );
-		if (xPos < xMin) xMin = xPos;
-		if (xPos > xMax) xMax = xPos;
-		if (yPos < yMin) yMin = yPos;
-		if (yPos > yMax) yMax = yPos;
-		if (zPos < zMin) zMin = zPos;
-		if (zPos > zMax) zMax = zPos;
-	}
-
-	// set the variables for the bounding box and phantom size
-	boundingBox_Min = G4ThreeVector(xMin,yMin,zMin);
-	boundingBox_Max = G4ThreeVector(xMax,yMax,zMax);
-	phantomSize = G4ThreeVector(xMax-xMin,yMax-yMin,zMax-zMin);
-
-	MatrixXi F = animator->GetF();
-	vector<Vector3i> faceVec;
-	for (size_t i=0; i<F.rows(); i++)
-	{
-		G4int a = F(i,0);
-		G4int b = F(i,1);
-		G4int c = F(i,2);
-		Vector3i face(a,b,c);
-		faceVec.push_back(face);
-		tess->AddFacet(new G4TriangularFacet(vertexVector[a], vertexVector[b], vertexVector[c], ABSOLUTE));
-	}
-	tess->SetSolidClosed(true);
-
-
-//	// plyGen
-//	ofstream ofs( "../phantoms/" + to_string(frameNo) + ".ply");
-//	ofs << "ply" << endl;
-//	ofs << "format ascii 1.0" << endl;
-//	ofs << "comment Exported by RapidForm" << endl;
-//	ofs << "element vertex " << vertexVector.size() << endl;
-//	ofs << "property float x" << endl;
-//	ofs << "property float y" << endl;
-//	ofs << "property float z" << endl;
-//	ofs << "element face " << faceVec.size() << endl;
-//	ofs << "property list uchar int vertex_index" << endl;
-//	ofs << "end_header" << endl;
-//	for (auto itr:vertexVector) {
-//		ofs << itr.x() + trans.getX()*cm << " " << itr.y() + trans.getY()*cm << " " << itr.z() + trans.getZ()*cm<< endl;
-//	}
-//	for (auto itr:faceVec) {
-//		ofs << "3 " << itr.x() << " " << itr.y() << " " << itr.z() << endl;
-//	}
 }
 
-void TETModelImport::ReadFrameRecord()
+void TETModelImport::ConstructTet()
 {
-	ifstream ifs("../phantoms/record.txt");
-	if(!ifs.is_open()) {
-		cerr << "record file is not opened" << endl;
-		exit(1);
-	}
-
-	int frameNo(0);
-
-	string dump;
-	while (getline(ifs, dump))
+	MatrixXi T = animator->GetT();
+	MatrixXd U = animator->GetU();
+	G4ThreeVector center = (boundingBox_Max + boundingBox_Min)*0.5;
+	G4bool degenChk;
+	G4int degenCount(0);
+	for(G4int i=0; i<T.rows(); i++)
 	{
-		stringstream ss(dump);
-		Vector3d position;
-		ss >> position(0) >> position(1) >> position(2);
-		rootPosition.push_back(position);
-
-		vector<Quaterniond,aligned_allocator<Quaterniond>> qVec;
-		qVec.clear();
-		Quaterniond q;
-		for (int i=0; i<22; i++) {
-			ss >> q.w() >> q.x() >> q.y() >> q.z();
-			qVec.push_back(q);
-		}
-		boneQuat.push_back(qVec);
-
-		frameNo++;
-	}
-
-	ifs.close();
-}
-
-
-void TETModelImport::DoseRead(G4String doseFile){
-	//read dose file : PLEASE be careful not to include dose ID 0
-	std::ifstream ifs(doseFile);
-	if(!ifs.is_open()) return;
-	doseOrganized = true;
-
-	G4String aLine;
-	while(!ifs.eof()){
-		getline(ifs, aLine);
-		if(aLine.empty()) break;
-
-		std::stringstream ss(aLine);
-		G4int doseID; ss>>doseID;
-		G4String name; ss>>name; doseName[doseID] = name;
-		G4int organID;
-		while(ss>>organID){
-			if(organ2dose.find(organID)==organ2dose.end()) organ2dose[organID] = {doseID};
-			else	                                       organ2dose[organID].push_back(doseID);
-		}
-	}
-	ifs.close();
-
-}
-
-void TETModelImport::DataRead(G4String eleFile, G4String nodeFile)
-{
-	using namespace std;
-
-	G4String tempStr;
-	G4int tempInt;
-
-	// Read *.node file
-	//
-	std::ifstream ifpNode;
-
-	ifpNode.open(nodeFile);
-	if(!ifpNode.is_open()) {
-		// exception for the case when there is no *.node file
-		G4Exception("TETModelImport::DataRead","",FatalErrorInArgument,
-				G4String("      There is no " + nodeFile ).c_str());
-	}
-	G4cout << "  Opening TETGEN node (vertex points: x y z) file '" << nodeFile << "'" <<G4endl;
-
-	G4int numVertex;
-	G4double xPos, yPos, zPos;
-	G4double xMin(DBL_MAX), yMin(DBL_MAX), zMin(DBL_MAX);
-	G4double xMax(DBL_MIN), yMax(DBL_MIN), zMax(DBL_MIN);
-
-	ifpNode >> numVertex >> tempInt >> tempInt >> tempInt;
-
-	for(G4int i=0; i<numVertex; i++)
-	{
-		ifpNode >> tempInt >> xPos >> yPos >> zPos;
-
-		// set the unit
-		xPos*=cm;
-		yPos*=cm;
-		zPos*=cm;
-
-		// save the node data as the form of std::vector<G4ThreeVector>
-		vertexVector.push_back(G4ThreeVector(xPos, yPos, zPos));
-
-		// to get the information of the bounding box of phantom
-		if (xPos < xMin) xMin = xPos;
-		if (xPos > xMax) xMax = xPos;
-		if (yPos < yMin) yMin = yPos;
-		if (yPos > yMax) yMax = yPos;
-		if (zPos < zMin) zMin = zPos;
-		if (zPos > zMax) zMax = zPos;
-	}
-
-	// set the variables for the bounding box and phantom size
-	boundingBox_Min = G4ThreeVector(xMin,yMin,zMin);
-	boundingBox_Max = G4ThreeVector(xMax,yMax,zMax);
-	G4ThreeVector center = (boundingBox_Max+boundingBox_Min)*0.5;
-	phantomSize = G4ThreeVector(xMax-xMin,yMax-yMin,zMax-zMin);
-
-	ifpNode.close();
-
-	// Read *.ele file
-	//
-	std::ifstream ifpEle;
-
-	ifpEle.open(eleFile);
-	if(!ifpEle.is_open()) {
-		// exception for the case when there is no *.ele file
-		G4Exception("TETModelImport::DataRead","",FatalErrorInArgument,
-				G4String("      There is no " + eleFile ).c_str());
-	}
-	G4cout << "  Opening TETGEN elements (tetrahedron with node No.) file '" << eleFile << "'" <<G4endl;
-
-	G4int numEle;
-	ifpEle >> numEle  >> tempInt >> tempInt;
-
-	for(G4int i=0; i<numEle; i++)
-	{
-		ifpEle >> tempInt;
-		G4int* ele = new G4int[4];
-		for(G4int j=0;j<4;j++){
-			ifpEle >> tempInt;
-			ele[j]=tempInt;
-		}
-		eleVector.push_back(ele);
-		ifpEle >> tempInt;
-		materialVector.push_back(tempInt);
+		materialVector.push_back(T(i,4));
 
 		// save the element (tetrahedron) data as the form of std::vector<G4Tet*>
 		tetVector.push_back(new G4Tet("Tet_Solid",
-							   		  vertexVector[ele[0]]-center,
-									  vertexVector[ele[1]]-center,
-									  vertexVector[ele[2]]-center,
-									  vertexVector[ele[3]]-center));
+							   		  RowToG4Vec(U.row(T(i,0)))-center,
+									  RowToG4Vec(U.row(T(i,1)))-center,
+									  RowToG4Vec(U.row(T(i,2)))-center,
+									  RowToG4Vec(U.row(T(i,3)))-center, &degenChk));
+		if(degenChk) degenCount++;
 
 		// calculate the total volume and the number of tetrahedrons for each organ
 		std::map<G4int, G4double>::iterator FindIter = volumeMap.find(materialVector[i]);
@@ -298,79 +102,7 @@ void TETModelImport::DataRead(G4String eleFile, G4String nodeFile)
 			numTetMap[materialVector[i]] = 1;
 		}
 	}
-	ifpEle.close();
-}
-
-void TETModelImport::DataRead(G4String meshFile)
-{
-    std::ifstream ifs;
-
-    ifs.open(meshFile);
-    if(!ifs.is_open()) {
-        // exception for the case when there is no *.node file
-        G4Exception("TETModelImport::DataRead","",FatalErrorInArgument,
-                G4String("      There is no " + meshFile ).c_str());
-    }
-    G4cout << "  Opening TETGEN node (vertex points: x y z) file '" << meshFile << "'" <<G4endl;
-
-    G4String dump;
-    G4double xMin(DBL_MAX), yMin(DBL_MAX), zMin(DBL_MAX);
-    G4double xMax(DBL_MIN), yMax(DBL_MIN), zMax(DBL_MIN);
-    while(getline(ifs,dump)){
-        stringstream ss(dump);
-        ss>>dump;
-        if(dump=="Vertices"){
-            G4int numVertex, tmp;
-            G4ThreeVector point;
-            ifs>>numVertex;
-            for(int i=0;i<numVertex;i++){
-                ifs>>point>>tmp; point*=cm;
-                vertexVector.push_back(point);
-                xMin = point.getX()<xMin? point.getX():xMin;
-                yMin = point.getY()<yMin? point.getY():yMin;
-                zMin = point.getZ()<zMin? point.getZ():zMin;
-                xMax = point.getX()>xMax? point.getX():xMax;
-                yMax = point.getY()>yMax? point.getY():yMax;
-                zMax = point.getZ()>zMax? point.getZ():zMin;
-            }
-        }
-        else if(dump=="Tetrahedra"){
-            G4int numEle, a, b, c, d, id;
-            ifs>>numEle;
-            for(int i=0;i<numEle;i++){
-                G4int* ele = new G4int[4];
-                ifs>>a>>b>>c>>d>>id;
-                ele[0]=a-1;ele[1]=b-1;ele[2]=c-1;ele[3]=d-1;
-                eleVector.push_back(ele);
-                materialVector.push_back(id);
-                // save the element (tetrahedron) data as the form of std::vector<G4Tet*>
-                tetVector.push_back(new G4Tet("Tet_Solid",
-                                              vertexVector[ele[0]],
-                                              vertexVector[ele[1]],
-                                              vertexVector[ele[2]],
-                                              vertexVector[ele[3]]));
-                // calculate the total volume and the number of tetrahedrons for each organ
-                std::map<G4int, G4int>::iterator FindIter = numTetMap.find(materialVector[i]);
-
-                if(FindIter!=numTetMap.end()){
-                    volumeMap[materialVector[i]]+=tetVector[i]->GetCubicVolume();
-//                    volumeMap[materialVector[i]]=0;
-                    numTetMap[materialVector[i]]++;
-                }
-                else {
-                    volumeMap[materialVector[i]] = tetVector[i]->GetCubicVolume();
-//                    volumeMap[materialVector[i]] = 0;
-                    numTetMap[materialVector[i]] = 1;
-                }
-            }
-        }
-    }
-
-    boundingBox_Min = G4ThreeVector(xMin,yMin,zMin);
-    boundingBox_Max = G4ThreeVector(xMax,yMax,zMax);
-
-
-    ifs.close();
+	G4cout<<"G4Tet construction done...degen#: "<<degenCount<<G4endl;
 }
 
 void TETModelImport::MaterialRead(G4String materialFile)
@@ -438,16 +170,6 @@ void TETModelImport::MaterialRead(G4String materialFile)
 		}
 		materialMap[idx]=mat;
 		massMap[idx]=densityMap[idx]*volumeMap[idx];
-	}
-
-	if(DoseWasOrganized()){
-		for(auto dm:doseName){
-			doseMassMap[dm.first] = 0;
-		}
-		for(auto od:organ2dose){
-			for(auto doseID:od.second)
-				doseMassMap[doseID] += massMap[od.first];
-		}
 	}
 }
 

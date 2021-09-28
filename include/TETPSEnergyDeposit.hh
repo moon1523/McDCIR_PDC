@@ -23,75 +23,35 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+// TETPSEnergyDeposit.hh
+// \file   MRCP_GEANT4/External/include/TETPSEnergyDeposit.hh
+// \author Haegin Han
 //
 
-#ifndef PrimaryGeneratorAction_hh
-#define PrimaryGeneratorAction_hh 1
+#ifndef TETPSEnergyDeposit_h
+#define TETPSEnergyDeposit_h 1
 
-#include "G4VUserPrimaryGeneratorAction.hh"
-#include "globals.hh"
-#include "G4Event.hh"
-#include "G4ParticleGun.hh"
-#include "G4SystemOfUnits.hh"
-#include "G4RotationMatrix.hh"
-#include "G4RandomDirection.hh"
+#include "G4PSEnergyDeposit.hh"
 #include "TETModelImport.hh"
 
-#include <map>
-#include <algorithm>
+// *********************************************************************
+// This is the scorer based on G4PSEnergyDeposit class.
+// -- GetIndex: Return the organ ID instead of copy number automatically
+//              given by Parameterisation geometry.
+// *********************************************************************
 
-using namespace std;
-
-class PrimaryMessenger;
-
-enum DetectorZoomField
+class TETPSEnergyDeposit : public G4PSEnergyDeposit
 {
-  FD48,
-  FD42,
-  FD37,
-  FD31,
-  FD27,
-  FD23,
-  FD19,
-  FD16
-};
+   public:
+      TETPSEnergyDeposit(G4String name,TETModelImport* _tetData);
+      virtual ~TETPSEnergyDeposit();
 
-class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
-{
-public:
-  PrimaryGeneratorAction();
-  virtual ~PrimaryGeneratorAction();
+  protected:
+      virtual G4int GetIndex(G4Step*);
 
-  virtual void GeneratePrimaries(G4Event *);
-
-  G4ParticleGun *GetParticleGun() const { return fPrimary; }
-  void SetSourceEnergy(G4int peakE); //peakE in keV
-
-  void FlatDetectorInitialization(DetectorZoomField FD, G4double SID);
-  void SetCarmAngles(G4double primary, G4double secondary)
-  // carm_primary = 20 * deg;   // +LAO, -RAO
-  // carm_secondary = 20 * deg; // +CAU, -CRA
-  {
-    rotate.setTheta(0);
-    rotate.rotateY(primary).rotateX(secondary);
-
-    G4ThreeVector focalSpot = rotate * G4ThreeVector(0, 0, -810*mm); //what is 810?
-    fPrimary->SetParticlePosition(focalSpot + isocenter);
-  }
-
-  G4ThreeVector SampleRectangularBeamDirection();
-
-private:
-  G4ParticleGun *fPrimary;
-  G4double angle1, angle2;
-  G4RotationMatrix rotate;
-  G4ThreeVector isocenter;
-
-  // Energy
-  map<G4double, G4double> cdf;
-
-  //messenger
-  PrimaryMessenger *messenger;
+  private:
+      TETModelImport* tetData;
 };
 
 #endif
+
