@@ -97,12 +97,14 @@ void DetectorConstruction::ConstructOperatingTable()
 	G4ThreeVector curtainHalfSize(0.25*mm, 250*mm, 200*mm);
 
 	G4LogicalVolume* lv_phantomBox = ConstructPatient();
+	lv_phantomBox->SetVisAttributes(G4VisAttributes::GetInvisible());
 
 	// frame
 	G4double halfZ = tableHalfSize.z()+curtainHalfSize.z()+((G4Box*) lv_phantomBox->GetSolid())->GetZHalfLength();
 	G4double halfX = max(tableHalfSize.x()+curtainHalfSize.x(),((G4Box*) lv_phantomBox->GetSolid())->GetXHalfLength());
 	G4Box* frame = new G4Box("sol_frame", halfX, tableHalfSize.y(), halfZ);
 	G4LogicalVolume* lv_frame = new G4LogicalVolume(frame, G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR"), "lv_frame");
+	lv_frame->SetVisAttributes(G4VisAttributes::GetInvisible());
 	frame_rotation_matrix = new G4RotationMatrix();
 	frame_rotation_matrix->setAxis(G4ThreeVector(0,0,-1));
  	pv_frame = 	new G4PVPlacement(frame_rotation_matrix, table_translation, lv_frame, "pv_frame", worldLogical, false, 0);
@@ -171,20 +173,20 @@ G4LogicalVolume* DetectorConstruction::ConstructPatient()
 	for(int i=0;i<numT;i++)
 	{
 		int a, b, c, d, id;
-		ifsEle>>tmp>>a>>b>>c>>d>>id;
+		ifsEle>>tmp>>a>>b>>c>>d;//>>id;
 		G4VSolid* tet = new G4Tet("tet", G4ThreeVector(V(a,0),V(a,1),V(a,2)),
 		                                 G4ThreeVector(V(b,0),V(b,1),V(b,2)),
 										 G4ThreeVector(V(c,0),V(c,1),V(c,2)),
 										 G4ThreeVector(V(d,0),V(d,1),V(d,2)));
-		G4Material* mat;
-		if(id<100) mat = bone;
-		else if(id==125) mat = tissue;
-		else if(id==158||id==159) mat=lung;
-		else{
-			cout<<"wrong ID: "<<id<<endl;
-			exit(100);
-		}
-		G4LogicalVolume* lv_tet = new G4LogicalVolume(tet, mat, "tet");
+		// G4Material* mat;
+		// if(id<100) mat = bone;
+		// else if(id==125) mat = tissue;
+		// else if(id==158||id==159) mat=lung;
+		// else{
+		// 	cout<<"wrong ID: "<<id<<endl;
+		// 	exit(100);
+		// }
+		G4LogicalVolume* lv_tet = new G4LogicalVolume(tet, tissue, "tet");
 		new G4PVPlacement(0, G4ThreeVector(), lv_tet, "tet", lv_phantomBox, false, 0);
 		// lv_tet->SetVisAttributes(G4VisAttributes::GetInvisible());
 	}
