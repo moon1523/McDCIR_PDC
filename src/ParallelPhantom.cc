@@ -102,4 +102,5 @@ void ParallelPhantom::Deform(RotationList vQ, Vector3d root)
   dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetXHalfLength(halfSize.x());
   dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetYHalfLength(halfSize.y());
   dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetZHalfLength(halfSize.z());
+ 	G4RunManager::GetRunManager()->GeometryHasBeenModified();
 }
