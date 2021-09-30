@@ -34,7 +34,8 @@
 using namespace std;
 
 DetectorConstruction::DetectorConstruction()
-:worldLogical(0) ,worldPhysical(0), carm_isocenter(1120 * mm, 600 * mm, 1135 * mm), table_default_trans(1.12*m, -0.3*m, 0.7*m)
+:worldLogical(0) ,worldPhysical(0), carm_isocenter(1120 * mm, 600 * mm, 1135 * mm), table_default_trans(1.12*m, -0.3*m, 0.7*m),
+focalLength(810*mm)
 {
 	table_rotation_center = table_default_trans;
 	// Operating Table (w/ patient, curtain)
