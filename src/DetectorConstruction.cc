@@ -34,8 +34,9 @@
 using namespace std;
 
 DetectorConstruction::DetectorConstruction()
-:worldLogical(0) ,worldPhysical(0)
+:worldLogical(0) ,worldPhysical(0), carm_isocenter(1120 * mm, 600 * mm, 1135 * mm), table_default_trans(1.12*m, -0.3*m, 0.7*m)
 {
+	table_rotation_center = table_default_trans;
 	// Operating Table (w/ patient, curtain)
 //	table_ocr = G4ThreeVector(-280,-960,-10); // Initial position
 	// table_trans = G4ThreeVector(-80*mm, 20*mm -10*mm);     // Operating position
@@ -43,7 +44,6 @@ DetectorConstruction::DetectorConstruction()
 	// table_rotation_center = G4ThreeVector(1200*mm, 0*mm, 820*mm);
 
 	// C-arm det
-	carm_isocenter = G4ThreeVector(1120 * mm, 600 * mm,1135 * mm);
 	// carm_primary   = 20 * deg;   // +LAO, -RAO
 	// carm_secondary = 20 * deg;   // +CAU, -CRA
 
@@ -59,18 +59,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 {  
 	SetupWorldGeometry();
 	ConstructOperatingTable();
-	// ConstructPatient();
-	ConstructPbGlass();
+	// ConstructPbGlass();
 	ConstructCarmDet();
 	return worldPhysical;
 }
 
 void DetectorConstruction::SetupWorldGeometry()
 {
-	// Define the world box (size: 20*20*20 m3)
-    G4double worldHalfX = 10. * m;
-    G4double worldHalfY = 10. * m;
-    G4double worldHalfZ = 10. * m;
+	// Define the world box (size: 10*10*5 m3)
+    G4double worldHalfX = 5. * m;
+    G4double worldHalfY = 5. * m;
+    G4double worldHalfZ = 2.5 * m;
 
 	G4VSolid* worldSolid = new G4Box("worldSolid", worldHalfX, worldHalfY, worldHalfZ);
 	worldLogical = new G4LogicalVolume(worldSolid,G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR"),"worldLogical");
@@ -106,8 +105,7 @@ void DetectorConstruction::ConstructOperatingTable()
 	G4LogicalVolume* lv_frame = new G4LogicalVolume(frame, G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR"), "lv_frame");
 	lv_frame->SetVisAttributes(G4VisAttributes::GetInvisible());
 	frame_rotation_matrix = new G4RotationMatrix();
-	frame_rotation_matrix->setAxis(G4ThreeVector(0,0,-1));
- 	pv_frame = 	new G4PVPlacement(frame_rotation_matrix, table_translation, lv_frame, "pv_frame", worldLogical, false, 0);
+ 	pv_frame = 	new G4PVPlacement(frame_rotation_matrix, table_default_trans + frame_ralative_to_table, lv_frame, "pv_frame", worldLogical, false, 0);
 
 	// phantom box
 	new G4PVPlacement(0, G4ThreeVector(0,frame->GetYHalfLength()-((G4Box*) lv_phantomBox->GetSolid())->GetYHalfLength()-10*cm,halfZ-((G4Box*) lv_phantomBox->GetSolid())->GetZHalfLength()),lv_phantomBox, "phantom box", lv_frame, false, 0);
@@ -125,7 +123,7 @@ void DetectorConstruction::ConstructOperatingTable()
 	G4ThreeVector relative_position_to_table
 		= ( G4ThreeVector(-table->GetXHalfLength()-curtain->GetXHalfLength(), table->GetYHalfLength()-curtain->GetYHalfLength(), -curtain->GetZHalfLength())
 						- curtain_margin);
-	G4LogicalVolume* lv_curtain = new G4LogicalVolume(curtain, G4NistManager::Instance()->FindOrBuildMaterial("G4_Pb"), "lv_curtain");
+	G4LogicalVolume* lv_curtain = new G4LogicalVolume(curtain, G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR"), "lv_curtain");
 	new G4PVPlacement(0, relative_position_to_table + pv_table->GetTranslation(), lv_curtain, "pv_curtain", lv_frame, false, 0);
 	lv_curtain->SetVisAttributes( new G4VisAttributes(G4Colour(0.,0.,1.,0.8)) );
 }
@@ -167,8 +165,8 @@ G4LogicalVolume* DetectorConstruction::ConstructPatient()
 	}
 	int numT;
 	ifsEle>>numT>>tmp>>tmp;
-	G4Material* bone = G4NistManager::Instance()->FindOrBuildMaterial("G4_BONE_CORTICAL_ICRP");
-	G4Material* lung = G4NistManager::Instance()->FindOrBuildMaterial("G4_LUNG_ICRP");
+	// G4Material* bone = G4NistManager::Instance()->FindOrBuildMaterial("G4_BONE_CORTICAL_ICRP");
+	// G4Material* lung = G4NistManager::Instance()->FindOrBuildMaterial("G4_LUNG_ICRP");
 	G4Material* tissue = G4NistManager::Instance()->FindOrBuildMaterial("G4_TISSUE_SOFT_ICRP");
 	for(int i=0;i<numT;i++)
 	{

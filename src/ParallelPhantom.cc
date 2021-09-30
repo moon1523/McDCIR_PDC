@@ -80,8 +80,8 @@ void ParallelPhantom::Construct()
   lv_tet = new G4LogicalVolume(new G4Tet("tet", G4ThreeVector(), G4ThreeVector(0, 0, 1*cm),
                                          G4ThreeVector(0, 1*cm, 0), G4ThreeVector(1*cm, 0, 0)),0,"tet");
   TETParameterisation* param = new TETParameterisation(tetData);
-  // new G4PVParameterised("paraPara",lv_tet, lv_phantomBox, kUndefined, tetData->GetNumTetrahedron(), param);
-  new G4PVParameterised("param",lv_tet, lv_phantomBox, kUndefined, 1, param);
+  new G4PVParameterised("paraPara",lv_tet, lv_phantomBox, kUndefined, tetData->GetNumTetrahedron(), param);
+  // new G4PVParameterised("param",lv_tet, lv_phantomBox, kUndefined, 1, param);
 }
 
 void ParallelPhantom::ConstructSD()
