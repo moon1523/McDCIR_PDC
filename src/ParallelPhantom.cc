@@ -72,13 +72,15 @@ void ParallelPhantom::Construct()
   G4ThreeVector halfSize = (tetData->GetPhantomBoxMax() - tetData->GetPhantomBoxMin())*0.5 + G4ThreeVector(5., 5., 5.)*cm; //5-cm-margin
   G4VSolid* paraBox = new G4Box("phantomBox",halfSize.x(),halfSize.y(),halfSize.z());
   G4LogicalVolume* lv_phantomBox = new G4LogicalVolume(paraBox,0,"phantomBox");
+  lv_phantomBox->SetVisAttributes(G4VisAttributes::GetInvisible());
   pv_doctor = new G4PVPlacement(0,center,lv_phantomBox,"phantomBox",worldLogical,false,0);
 
   //
   // mother of parallel world parameterized volumes
   //
   lv_tet = new G4LogicalVolume(new G4Tet("tet", G4ThreeVector(), G4ThreeVector(0, 0, 1*cm),
-                                         G4ThreeVector(0, 1*cm, 0), G4ThreeVector(1*cm, 0, 0)),0,"tet");
+                                         G4ThreeVector(0, 1*cm, 0), G4ThreeVector(1*cm, 0, 0)),G4NistManager::Instance()->FindOrBuildMaterial("G4_TISSUE_SOFT_ICRP"),"tet");
+  // lv_tet->SetVisAttributes(G4VisAttributes::GetInvisible());
   TETParameterisation* param = new TETParameterisation(tetData);
   new G4PVParameterised("paraPara",lv_tet, lv_phantomBox, kUndefined, tetData->GetNumTetrahedron(), param);
   // new G4PVParameterised("param",lv_tet, lv_phantomBox, kUndefined, 1, param);
