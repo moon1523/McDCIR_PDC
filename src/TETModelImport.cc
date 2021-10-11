@@ -42,7 +42,7 @@ TETModelImport::TETModelImport(G4String _phantomName)
 	G4String drfFile      =  phantomName + ".DRF";
 
 	animator = new PhantomAnimator(phantomName);
-	animator->CalibrateTo("S_Moon");
+	// animator->CalibrateTo("S_Moon");
 	UpdateBBox();
 
 	ConstructTet();
@@ -308,6 +308,6 @@ void TETModelImport::PrintMaterialInfomation()
 			   << std::setw(11) << volumeMap[idx]/cm3          // organ volume
 			   << std::setw(11) << 1.089      // organ density
 			   << std::setw(11) << massMap[idx]/mg              // organ mass
-			   << "\tskin" << G4endl; // organ name
+			   << "\tskin" << G4endl; // organ name 
 	}
 }

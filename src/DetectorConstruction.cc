@@ -157,7 +157,7 @@ G4LogicalVolume* DetectorConstruction::ConstructPatient()
 	Eigen::RowVector3d hlafSize = (max-min)*0.5;
 	G4VSolid* phantomBox = new G4Box("patientBox", hlafSize.x(), hlafSize.y(), hlafSize.z());
 	G4LogicalVolume* lv_phantomBox = new G4LogicalVolume(phantomBox, G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR"), "patientBox");
-	
+
 	//construc tets
 	ifstream ifsEle("./phantoms/patient.ele");
 	if(!ifsEle.is_open()){

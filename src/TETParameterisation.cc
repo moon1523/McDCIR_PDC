@@ -44,8 +44,9 @@ TETParameterisation::TETParameterisation(TETModelImport* _tetData)
 
 	if(colourMap.size()) isforVis = true;
 	else                 isforVis = false;
-
-	tissue = G4NistManager::Instance()->FindOrBuildMaterial("G4_TISSUE_SOFT_ICRP");
+	G4cout<<"-!"<<G4endl;
+	tissue = G4Material::GetMaterial("G4_TISSUE_SOFT_ICRP");
+	G4cout<<"-?"<<G4endl;
 }
 
 TETParameterisation::~TETParameterisation()
