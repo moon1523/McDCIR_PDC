@@ -43,7 +43,7 @@ int main(int argc, char** argv)
 		}
 		else if ( G4String(argv[i]) == "-v" )
 		{
-			ui = new G4UIExecutive(argc, argv, "csh");
+			ui = new G4UIExecutive(argc, argv, "Qt");
 		}
 		else {
 			cout << "argument check" << endl;
@@ -68,8 +68,8 @@ int main(int argc, char** argv)
 	det->RegisterParallelWorld(new ParallelPhantom("parallel", tetData));
 	runManager->SetUserInitialization(det);
 	G4VModularPhysicsList* physicsList = new FTFP_BERT;
-	physicsList->RegisterPhysics(new G4StepLimiterPhysics());
-	physicsList->RegisterPhysics(new G4ParallelWorldPhysics("parallel"));
+	// physicsList->RegisterPhysics(new G4StepLimiterPhysics());
+	physicsList->RegisterPhysics(new G4ParallelWorldPhysics("parallel", true));
 	runManager->SetUserInitialization(physicsList);
 	runManager->SetUserInitialization(new ActionInitialization(tetData, output, initTimer));
 
@@ -86,8 +86,8 @@ int main(int argc, char** argv)
 	}
 	else {
 		// interactive mode
-		// UImanager->ApplyCommand("/control/execute init_vis.mac");
-		runManager->Initialize();
+		UImanager->ApplyCommand("/control/execute init_vis.mac");
+		// runManager->Initialize();
 		ui->SessionStart();
 		delete ui;
 	}

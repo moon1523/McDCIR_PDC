@@ -36,9 +36,10 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
 
 	FlatDetectorInitialization(DetectorZoomField::FD48, 119.5 * cm); // FD, SID
 	SetSourceEnergy(80);
-	G4double carm_primary = 20 * deg;   // +LAO, -RAO
-	G4double carm_secondary = 20 * deg; // +CAU, -CRA
-	rotate.rotateY(carm_primary).rotateX(carm_secondary);
+	// G4double carm_primary = 20 * deg;   // +LAO, -RAO
+	// G4double carm_secondary = 20 * deg; // +CAU, -CRA
+	// rotate.rotateY(carm_primary).rotateX(carm_secondary);
+    rotate.set(G4RotationMatrix::IDENTITY.axisAngle());
 	G4ThreeVector focalSpot = rotate * G4ThreeVector(0, 0, -810 * mm);
 	fPrimary->SetParticlePosition(focalSpot + isocenter);
 

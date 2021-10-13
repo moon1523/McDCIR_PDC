@@ -40,8 +40,8 @@
 #include "G4SystemOfUnits.hh"
 #include "G4RunManager.hh"
 
-DetectorMessenger::DetectorMessenger(DetectorConstruction* _det)
-:G4UImessenger(), fDet(_det)
+DetectorMessenger::DetectorMessenger(DetectorConstruction *_det)
+	: G4UImessenger(), fDet(_det)
 {
 	fMachineDir = new G4UIdirectory("/machine/");
 	fTableTransCmd = new G4UIcmdWith3VectorAndUnit("/machine/tableTrans", this);
@@ -56,44 +56,50 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* _det)
 
 	fDetCmd->SetParameterName("lao[deg]", "caud[deg]", "sid[cm]", true, true);
 	fGlassRotCmd->SetParameterName("axisX*[deg]", "axisY*[deg]", "axisZ*[deg]", false);
-
 }
 
-DetectorMessenger::~DetectorMessenger() {
+DetectorMessenger::~DetectorMessenger()
+{
 	delete fMachineDir;
 	delete fTableTransCmd; //trans
 	delete fTablePivotCmd; //pivot
-	delete fDetCmd; //primary, secondary, sid
+	delete fDetCmd;		   //primary, secondary, sid
 	delete fGlassTransCmd;
 	delete fGlassRotCmd; // axis * angle(in deg)
 }
 
-void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
+void DetectorMessenger::SetNewValue(G4UIcommand *command, G4String newValue)
 {
-	if(command == fTableTransCmd){
+	if (command == fTableTransCmd)
+	{
 		tableTrans = fTableTransCmd->GetNew3VectorValue(newValue);
 		fDet->SetTablePose(tableTrans, tablePivot);
+		G4RunManager::GetRunManager()->GeometryHasBeenModified();
 	}
-	else if(command == fTablePivotCmd){
+	else if (command == fTablePivotCmd)
+	{
 		tablePivot = fTablePivotCmd->GetNewDoubleValue(newValue);
 		fDet->SetTablePose(tableTrans, tablePivot);
+		G4RunManager::GetRunManager()->GeometryHasBeenModified();
 	}
-	else if(command == fDetCmd){
+	else if (command == fDetCmd)
+	{
 		G4ThreeVector det = fDetCmd->GetNew3VectorValue(newValue);
-		fDet->SetCarmDetPose(det.x()*deg, det.y()*deg, det.z()*cm);
+		fDet->SetCarmDetPose(det.x() * deg, det.y() * deg, det.z() * cm);
+		G4RunManager::GetRunManager()->GeometryHasBeenModified();
 	}
-	else if(command == fGlassTransCmd){
+	else if (command == fGlassTransCmd)
+	{
 		glassTrans = fGlassTransCmd->GetNew3VectorValue(newValue);
 		fDet->SetGlassPose(glassTrans, glassAxis, glassTheta);
+		G4RunManager::GetRunManager()->GeometryHasBeenModified();
 	}
-	else if(command == fGlassRotCmd){
+	else if (command == fGlassRotCmd)
+	{
 		G4ThreeVector rot = fGlassRotCmd->GetNew3VectorValue(newValue);
 		glassTheta = rot.mag() * deg;
 		glassAxis = rot.unit();
 		fDet->SetGlassPose(glassTrans, glassAxis, glassTheta);
+		G4RunManager::GetRunManager()->GeometryHasBeenModified();
 	}
-	// else if(command == fCloseCmd){
-	// 	G4RunManager::GetRunManager()->GeometryHasBeenModified();
-	// }
 }
-

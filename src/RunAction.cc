@@ -70,7 +70,7 @@ void RunAction::EndOfRunAction(const G4Run* aRun)
 	// Print the run result by G4cout and std::ofstream
 	//
 	// print by G4cout
-	PrintResult(G4cout);
+	// PrintResult(G4cout);
 
 	// print by std::ofstream
 	std::ofstream ofs(outputFile.c_str());
@@ -85,14 +85,14 @@ void RunAction::PrintResult(std::ostream &out)
 	using namespace std;
 	EDEPMAP edepMap = *fRun->GetEdepMap();
 
-	out << G4endl
-	    << "=====================================================================" << G4endl
-	    << " Run #" << runID << " / Number of event processed : "<< numOfEvent     << G4endl
-	    << "=====================================================================" << G4endl
-	    << "organ ID| "
-		<< setw(19) << "Organ Mass (g)"
-		<< setw(19) << "Dose (Gy/source)"
-		<< setw(19) << "Relative Error" << G4endl;
+	// out << G4endl
+	//     << "=====================================================================" << G4endl
+	//     << " Run #" << runID << " / Number of event processed : "<< numOfEvent     << G4endl
+	//     << "=====================================================================" << G4endl
+	//     << "organ ID| "
+	// 	<< setw(19) << "Organ Mass (g)"
+	// 	<< setw(19) << "Dose (Gy/source)"
+	// 	<< setw(19) << "Relative Error" << G4endl;
 
 	out.precision(3);
 	auto massMap = tetData->GetMassMap();
@@ -102,10 +102,14 @@ void RunAction::PrintResult(std::ostream &out)
 		G4double variance    = ((squareDoese/numOfEvent) - (meanDose*meanDose))/numOfEvent;
 		G4double relativeE   = sqrt(variance)/meanDose;
 
-		out << setw(8)  << itr.first << "| "
+		// out << setw(8)  << itr.first << "| "
+		// 	<< setw(19) << fixed      << itr.second/g;
+		// out	<< setw(19) << scientific << meanDose/(joule/kg);
+		// out	<< setw(19) << fixed      << relativeE << G4endl;
+		out << setw(8)  << itr.first 
 			<< setw(19) << fixed      << itr.second/g;
-		out	<< setw(19) << scientific << meanDose/(joule/kg);
+		out	<< setw(19) << scientific << meanDose/(joule/kg)*1e12; //pGy
 		out	<< setw(19) << fixed      << relativeE << G4endl;
 	}
-	out << "=====================================================================" << G4endl << G4endl;
+	// out << "=====================================================================" << G4endl << G4endl;
 }

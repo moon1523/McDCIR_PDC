@@ -42,11 +42,11 @@ TETModelImport::TETModelImport(G4String _phantomName)
 	G4String drfFile      =  phantomName + ".DRF";
 
 	animator = new PhantomAnimator(phantomName);
-	animator->CalibrateTo("S_Moon");
+	// animator->CalibrateTo("S_Moon");
 	UpdateBBox();
 
 	ConstructTet();
-	MaterialRead(materialFile);
+	// MaterialRead(materialFile);
 	PrintMaterialInfomation();
 }
 
@@ -102,6 +102,13 @@ void TETModelImport::ConstructTet()
 			numTetMap[materialVector[i]] = 1;
 		}
 	}
+
+		//for skin dist
+	for(G4int i : materialVector)
+	{
+		massMap[i] += 1.089 * (g/cm3) * volumeMap[i];
+	}
+
 	G4cout<<"G4Tet construction done...degen#: "<<degenCount<<G4endl;
 }
 
@@ -280,16 +287,27 @@ void TETModelImport::PrintMaterialInfomation()
 	std::map<G4int, G4Material*>::iterator matIter;
 	G4cout<<std::setiosflags(std::ios::fixed);
 	G4cout.precision(3);
-	for(matIter=materialMap.begin(); matIter!=materialMap.end();matIter++)
-	{
-		G4int idx = matIter->first;
+	// for(matIter=materialMap.begin(); matIter!=materialMap.end();matIter++)
+	// {
+	// 	G4int idx = matIter->first;
 
+	// 	G4cout << std::setw(9)  << idx                         // organ ID
+	// 		   << std::setw(11) << numTetMap[idx]              // # of tetrahedrons
+	// 		   << std::setw(11) << volumeMap[idx]/cm3          // organ volume
+	// 		   << std::setw(11) << materialMap[idx]
+	// 		                       ->GetDensity()/(g/cm3)      // organ density
+	// 		   << std::setw(11) << massMap[idx]/g              // organ mass
+	// 		   << "\t"<<materialMap[idx]->GetName() << G4endl; // organ name
+	// }
+
+	for(auto iter:massMap)
+	{
+		G4int idx = iter.first;
 		G4cout << std::setw(9)  << idx                         // organ ID
 			   << std::setw(11) << numTetMap[idx]              // # of tetrahedrons
 			   << std::setw(11) << volumeMap[idx]/cm3          // organ volume
-			   << std::setw(11) << materialMap[idx]
-			                       ->GetDensity()/(g/cm3)      // organ density
-			   << std::setw(11) << massMap[idx]/g              // organ mass
-			   << "\t"<<materialMap[idx]->GetName() << G4endl; // organ name
+			   << std::setw(11) << 1.089      // organ density
+			   << std::setw(11) << massMap[idx]/mg              // organ mass
+			   << "\tskin" << G4endl; // organ name 
 	}
 }

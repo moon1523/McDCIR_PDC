@@ -55,8 +55,16 @@ public:
     void SetTablePose(G4ThreeVector table_trans, G4double table_pivot_angle) 
 	//_table_trans is the translation from when rotation center is at the center of the table
 	{  
-		frame_rotation_matrix->setTheta(table_pivot_angle);
-		pv_frame->SetTranslation(frame_ralative_to_table + table_rotation_center + frame_rotation_matrix->inverse() * table_trans);
+		G4ThreeVector frameOrigin = frame_ralative_to_table + table_default_trans + table_trans; //before rotation
+		if(table_pivot_angle==0) 
+		{
+			pv_frame->SetTranslation(frameOrigin);
+			return;
+		}
+
+		frame_rotation_matrix->set(G4RotationMatrix::IDENTITY.axisAngle());
+		frame_rotation_matrix->rotateZ(-table_pivot_angle);
+		pv_frame->SetTranslation(frameOrigin + frame_rotation_matrix->inverse() * (table_rotation_center - frameOrigin));
 	}
 
     // Glass
@@ -74,7 +82,7 @@ public:
 		carm_rotation_matrix->setTheta(0); //set identity
 		carm_rotation_matrix->rotateY(_carm_primary).rotateX(_carm_secondary);
 		carm_rotation_matrix->invert();
-		pv_det->SetTranslation(carm_rotation_matrix->inverse()*G4ThreeVector(0,0,_carm_sid) + carm_isocenter);
+		pv_det->SetTranslation(carm_rotation_matrix->inverse()*G4ThreeVector(0,0,_carm_sid-focalLength) + carm_isocenter);
     }
 
 
@@ -91,9 +99,8 @@ private:
 
 	// Operating Table
 	G4VPhysicalVolume* pv_frame;
-	G4ThreeVector table_rotation_center;
+	G4ThreeVector table_rotation_center, table_default_trans; //program input (relative coordinate to ChArUco)
 	G4RotationMatrix* frame_rotation_matrix; //inverse
-	G4ThreeVector table_translation;
 	G4ThreeVector frame_ralative_to_table;
 
 	// Glass
@@ -103,6 +110,7 @@ private:
 	G4VPhysicalVolume* pv_det;
 	G4ThreeVector carm_isocenter;
 	G4RotationMatrix* carm_rotation_matrix; //inverse
+	G4double focalLength;
 
 	//messenger
 	DetectorMessenger* messenger;

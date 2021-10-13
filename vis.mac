@@ -28,7 +28,7 @@
 /vis/verbose errors
 #
 # Draw geometry:
-/vis/drawVolume
+/vis/drawVolume worlds
 #
 #
 # Specify style (surface, wireframe, auxiliary edges,...)
