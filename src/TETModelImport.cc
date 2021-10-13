@@ -113,7 +113,7 @@ void TETModelImport::ConstructTet()
 	// 	massMap[i] += 1.089 * (g/cm3) * volumeMap[i];
 	// }
 
-	G4cout<<"G4Tet construction done...degen#: "<<degenCount<<G4endl;
+	G4cout<<"G4Tet construction done...degen #: "<<degenCount<<G4endl;
 }
 
 void TETModelImport::DoseRead(G4String doseFile){
@@ -208,7 +208,6 @@ void TETModelImport::MaterialRead(G4String materialFile)
 
 	if(DoseWasOrganized()){
 		for(auto dm:doseName){
-			cout << dm.first << " " << dm.second << endl;
 			doseMassMap[dm.first] = 0;
 		}
 		for(auto od:organ2dose){

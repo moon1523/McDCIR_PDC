@@ -37,7 +37,8 @@
 
 RunAction::RunAction(TETModelImport* _tetData, G4String _output, G4Timer* _init)
 :tetData(_tetData), outputFile(_output), initTimer(_init), runTimer(0),
- fRun(0), numOfEvent(0), runID(0), primaryParticle(""), primaryEnergy(0), weight(1.)
+ fRun(0), numOfEvent(0), runID(0), primaryParticle(""), primaryEnergy(0), weight(1.),
+ monitorDAP(0), tubeVoltage(0), ratioDAP(1.)
 {
 	if(!isMaster) return;
 	runTimer = new G4Timer;
@@ -62,6 +63,15 @@ RunAction::RunAction(TETModelImport* _tetData, G4String _output, G4Timer* _init)
 	if(tetData->DoseWasOrganized()) ofs<<"eff. dose (DRF)"<<"\t\t"<< "eff. dose";
 	ofs<<G4endl;
 	ofs.close();
+
+	// DAP table (unit: keV, Gy-cm^2)
+	ifstream dap_ifs("./spectra/DAP.dat");
+	if(!dap_ifs.is_open()) { G4cout << "DAP table is not opened" << G4endl; exit(1); }
+	G4int kVp; G4double dap;
+	while(!dap_ifs.eof()) {
+		dap_ifs >> kVp >> dap;
+		dapTable[kVp] = dap;
+	}
 }
 
 RunAction::~RunAction()
@@ -98,6 +108,7 @@ void RunAction::EndOfRunAction(const G4Run* aRun)
 
 	primaryParticle = fRun->GetParticleName();
 	primaryEnergy   = fRun->GetParticleEnergy();
+
 
 	G4ParticleDefinition* particle = G4ParticleTable::GetParticleTable()->FindParticle(primaryParticle);
 	weight = GetRadiationWeighting(particle, primaryEnergy);
@@ -143,6 +154,8 @@ void RunAction::SetDoses()
 		G4double relativeE   = sqrt(variance)/meanDose;
         doses[itr.first] = std::make_pair(meanDose/itr.second, relativeE);
 	}
+
+
 }
 
 void RunAction::SetEffectiveDose()

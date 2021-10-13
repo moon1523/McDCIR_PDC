@@ -73,14 +73,25 @@ private:
 	G4Timer*        initTimer;
 	G4Timer*        runTimer;
 
+	// Doses
 	std::map<G4int, G4double> massMap;
 	std::map<G4int, G4String> nameMap;
 	std::map<G4int, std::pair<G4double,G4double>> doses;
 	std::pair<G4double, G4double> effective, effective_DRF;
 	G4double weight;
 
+	// primary variables
 	G4String primaryParticle;
 	G4double primaryEnergy;
+
+	G4double monitorDAP;
+	G4int    tubeVoltage;
+
+	G4double ratioDAP;
+
+
+	map<G4int, G4double> dapTable;
+
 };
 
 #endif
