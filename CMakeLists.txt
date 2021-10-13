@@ -14,7 +14,6 @@ PROJECT(${PROJECT_NAME} CXX)
 #SET(MARIADB_INCLUDE_DIR /usr/local/include/mariadb/)
 #SET(MARIADB_LIB_DIR /usr/local/lib/mariadb/)
 #SET(LIBSSH_INCLUDE_DIR /usr/local/include/libssh/)
-
 #----------------------------------------------------------------------------
 # Find Geant4 package, activating all available UI and Vis drivers by default
 # You can set WITH_GEANT4_UIVIS to OFF via the command line or ccmake/cmake-gui
@@ -26,13 +25,13 @@ if(WITH_GEANT4_UIVIS)
 else()
   find_package(Geant4 REQUIRED)
 endif()
-
 #----------------------------------------------------------------------------
 # Setup Geant4 include directories and compile definitions
 # Setup include directory for this project
 #
 # libigl
 option(LIBIGL_WITH_TETGEN            "Use TetGen"         ON)
+set(LIBIGL_INCLUDE_DIR /home/sungho/data/libigl/v2.2.0/include)
 find_package(LIBIGL REQUIRED QUIET)
 set(LIBIGL_DIR ${LIBIGL_INCLUDE_DIR}/..)
 include(${Geant4_USE_FILE})

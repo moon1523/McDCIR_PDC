@@ -25,42 +25,42 @@
 //
 
 
-#ifndef Run_h
-#define Run_h 1
+#ifndef TETDRFScorer_h
+#define TETDRFScorer_h 1
 
-#include "G4Run.hh"
-#include "G4Event.hh"
+#include "G4VPrimitiveScorer.hh"
 #include "G4THitsMap.hh"
-#include "G4SDManager.hh"
 #include "TETModelImport.hh"
 
-typedef std::map<G4int, std::pair<G4double, G4double>> EDEPMAP;
-
-class Run : public G4Run
+class TETDRFScorer : public G4VPrimitiveScorer
 {
-public:
-	Run(TETModelImport* tetData);
-	virtual ~Run();
+   public: // with description
+      TETDRFScorer(G4String name,TETModelImport*);
+      virtual ~TETDRFScorer();
 
-	virtual void RecordEvent(const G4Event*);
-    virtual void Merge(const G4Run*);
+  protected: // with description
+      virtual G4int GetIndex(G4Step*);
+      virtual G4bool ProcessHits(G4Step*, G4TouchableHistory*);
 
-    EDEPMAP* GetEdepMap() {return &edepMap;}
-    G4String GetParticleName() {return primary;}
-    G4double GetParticleEnergy()   {return primaryE;}
+  public:
+      virtual void Initialize(G4HCofThisEvent*);
+      virtual void EndOfEvent(G4HCofThisEvent*);
+      virtual void clear();
 
-private:
-	EDEPMAP edepMap;
-	G4int fCollID;
-	G4int fCollID_DRF;
+  private:
 
-	std::map<G4int, std::vector<G4int>>  organ2dose;
-	std::map<G4int, G4double>  rbmFactor;
-	std::map<G4int, G4double>  bsFactor;
-	G4bool doseOrganized;
+      TETModelImport* PhantomData;
+      G4int FindIndexfromEnergyBin(G4double energy);
+      G4double GetRBMdose(G4double energy, G4double cellFlux, G4int organID);
+      G4double GetBSdose(G4double energy, G4double cellFlux, G4int organID);
 
-	G4String primary;
-	G4double primaryE;
+      G4int HCID;
+      G4THitsMap<G4double>* EvtMap;
+      std::vector<G4double> energyBin;
+      std::map<G4int, G4double> RBMratio;
+      std::map<G4int, G4double> BSratio;
+
+      G4ParticleDefinition* gamma;
 };
-
 #endif
+

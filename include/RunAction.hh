@@ -55,7 +55,14 @@ public:
 	virtual void BeginOfRunAction(const G4Run*);
 	virtual void EndOfRunAction(const G4Run*);
 
+	void SetDoses();
+	void SetEffectiveDose();
+	std::pair<G4double, G4double> PropagateError(std::vector<std::pair<G4double, G4double>> doses,
+													 std::vector<G4double> ratio);
+	G4double GetRadiationWeighting(G4ParticleDefinition* _particle, G4double _energy);
+
 	void PrintResult(std::ostream &out);
+	void PrintResultByLine(std::ostream &out);
   
 private:
 	TETModelImport* tetData;
@@ -65,6 +72,15 @@ private:
 	G4String        outputFile;
 	G4Timer*        initTimer;
 	G4Timer*        runTimer;
+
+	std::map<G4int, G4double> massMap;
+	std::map<G4int, G4String> nameMap;
+	std::map<G4int, std::pair<G4double,G4double>> doses;
+	std::pair<G4double, G4double> effective, effective_DRF;
+	G4double weight;
+
+	G4String primaryParticle;
+	G4double primaryEnergy;
 };
 
 #endif

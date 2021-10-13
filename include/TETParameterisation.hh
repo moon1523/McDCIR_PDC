@@ -69,7 +69,7 @@ class TETParameterisation : public G4VPVParameterisation
 
   private:
     TETModelImport*                    tetData;
-    G4Material* tissue;
+//    G4Material* tissue;
     std::map<G4int, G4VisAttributes*>  visAttMap;
     G4bool                             isforVis;
 };

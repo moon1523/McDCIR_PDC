@@ -18,6 +18,8 @@
 #include "TETModelImport.hh"
 #include "PhantomAnimator.hh"
 
+#include <igl/readOBJ.h>
+
 int main(int argc, char** argv)
 {
 	G4Timer* initTimer = new G4Timer;

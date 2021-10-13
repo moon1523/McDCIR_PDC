@@ -44,9 +44,9 @@ TETParameterisation::TETParameterisation(TETModelImport* _tetData)
 
 	if(colourMap.size()) isforVis = true;
 	else                 isforVis = false;
-	G4cout<<"-!"<<G4endl;
-	tissue = G4Material::GetMaterial("G4_TISSUE_SOFT_ICRP");
-	G4cout<<"-?"<<G4endl;
+//	G4cout<<"-!"<<G4endl;
+//	tissue = G4Material::GetMaterial("G4_TISSUE_SOFT_ICRP");
+//	G4cout<<"-?"<<G4endl;
 }
 
 TETParameterisation::~TETParameterisation()
@@ -67,15 +67,14 @@ G4Material* TETParameterisation::ComputeMaterial(const G4int copyNo,
                                                  G4VPhysicalVolume* phy,
                                                  const G4VTouchable* )
 {
-	return tissue;
-   // set the colour for each organ if visualization is required
-	// if(isforVis){
-	// 	G4int idx = tetData->GetMaterialIndex(copyNo);
-	// 	phy->GetLogicalVolume()->SetVisAttributes(visAttMap[idx]);
-	// }
+     // set the colour for each organ if visualization is required
+	 if(isforVis){
+	 	G4int idx = tetData->GetMaterialIndex(copyNo);
+	 	phy->GetLogicalVolume()->SetVisAttributes(visAttMap[idx]);
+	 }
 
-	// // return the material data for each material index
-	// return tetData->GetMaterial(tetData->GetMaterialIndex(copyNo));
+	 // return the material data for each material index
+	 return tetData->GetMaterial(tetData->GetMaterialIndex(copyNo));
 }
 
 

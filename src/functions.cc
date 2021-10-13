@@ -30,9 +30,12 @@ map<tuple<int,int,int>,vector<int>> GenerateGrid(MatrixXd V, double size){
 }
 
 map<int, map<int, double>> GenerateBarycentricCoord(MatrixXd V_f, MatrixXi T_f, MatrixXd V){
+
+    ofstream ofs("bary.txt");
     map<tuple<int,int,int>,vector<int>> grid = GenerateGrid(V);
     map<int, map<int, double>> baryCoords;
     double epsl(-1e-5);
+
     for(int n=0;n<T_f.rows();n++){
         vector<Vector3d> tet;
         Vector3d max(-1e10,-1e10,-1e10), min(1e10,1e10,1e10);
@@ -54,7 +57,9 @@ map<int, map<int, double>> GenerateBarycentricCoord(MatrixXd V_f, MatrixXi T_f, 
                 for(int k=k_min;k<k_max+1;k++){
                     auto key = make_tuple(i,j,k);
                     for(int idx:grid[key]){
-                        if(baryCoords.find(idx)!=baryCoords.end()) continue;
+                        if(baryCoords.find(idx)!=baryCoords.end())
+                            continue;
+                        
                         Vector3d v = V.row(idx).transpose();
                         double b0 = (tet[1]-v).cross(tet[2]-v).dot(tet[3]-v)*invVol6;
                         if(b0<epsl) continue;
@@ -75,7 +80,7 @@ map<int, map<int, double>> GenerateBarycentricCoord(MatrixXd V_f, MatrixXi T_f, 
         //if((int)baryCoords.size()==V.rows()) break;
     }cout<<endl;
     if((int)baryCoords.size()!=V.rows()){
-        cout<<"Check if all the vertices are in frame model!!"<<endl; exit(100);
+        cout<<"Check if all the vertices are in frame model!! (Especially Eyes)"<<endl; exit(100);
     }
     return baryCoords;
 }

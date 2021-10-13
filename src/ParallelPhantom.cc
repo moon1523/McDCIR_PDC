@@ -40,6 +40,7 @@
 #include "G4SDManager.hh"
 #include "TETParameterisation.hh"
 #include "TETPSEnergyDeposit.hh"
+#include "TETDRFScorer.hh"
 #include "ParallelMessenger.hh"
 
 ParallelPhantom
@@ -51,7 +52,7 @@ ParallelPhantom
 
 ParallelPhantom::~ParallelPhantom()
 {
-  delete messenger;
+	delete messenger;
 }
 
 void ParallelPhantom::Construct()
@@ -73,6 +74,12 @@ void ParallelPhantom::Construct()
   G4VSolid* paraBox = new G4Box("phantomBox",halfSize.x(),halfSize.y(),halfSize.z());
   G4LogicalVolume* lv_phantomBox = new G4LogicalVolume(paraBox,0,"phantomBox");
   lv_phantomBox->SetVisAttributes(G4VisAttributes::GetInvisible());
+
+  G4VisAttributes* va_para = new G4VisAttributes(G4Colour(1.0, 1.0, 1.0));
+  va_para->SetForceWireframe(true);
+  lv_phantomBox->SetVisAttributes( va_para );
+
+
   pv_doctor = new G4PVPlacement(0,center,lv_phantomBox,"phantomBox",worldLogical,false,0);
 
   //
@@ -87,7 +94,7 @@ void ParallelPhantom::Construct()
   // }
   lv_tet = new G4LogicalVolume(new G4Tet("tet", G4ThreeVector(), G4ThreeVector(0, 0, 1*cm),
                                          G4ThreeVector(0, 1*cm, 0), G4ThreeVector(1*cm, 0, 0)),G4Material::GetMaterial("G4_TISSUE_SOFT_ICRP"),"tet");
-  // lv_tet->SetVisAttributes(G4VisAttributes::GetInvisible());
+  lv_tet->SetVisAttributes(G4VisAttributes::GetInvisible());
   TETParameterisation* param = new TETParameterisation(tetData);
   new G4PVParameterised("paraPara",lv_tet, lv_phantomBox, kUndefined, tetData->GetNumTetrahedron(), param);
   // new G4PVParameterised("param",lv_tet, lv_phantomBox, kUndefined, 1, param);
@@ -95,21 +102,41 @@ void ParallelPhantom::Construct()
 
 void ParallelPhantom::ConstructSD()
 {
-  G4MultiFunctionalDetector* mfd = new G4MultiFunctionalDetector("phantom");
-  G4SDManager::GetSDMpointer()->AddNewDetector(mfd);
-  G4VPrimitiveScorer* scorer = new TETPSEnergyDeposit("edep", tetData);
-  mfd->RegisterPrimitive(scorer);
-  SetSensitiveDetector(lv_tet, mfd);
+	// Define detector (Phantom SD) and scorer (eDep)
+	//
+	G4SDManager* pSDman = G4SDManager::GetSDMpointer();
+	G4String phantomSDname = "PhantomSD";
+
+	// MultiFunctional detector
+	G4MultiFunctionalDetector* MFDet = new G4MultiFunctionalDetector(phantomSDname);
+	pSDman->AddNewDetector( MFDet );
+
+	// scorer for energy depositon in each organ
+	MFDet->RegisterPrimitive(new TETPSEnergyDeposit("eDep", tetData));
+	MFDet->RegisterPrimitive(new TETDRFScorer("DRF", tetData));
+
+	// attach the detector to logical volume for parameterised geometry (phantom geometry)
+	SetSensitiveDetector(lv_tet, MFDet);
+
+
+
+
+
+//	G4MultiFunctionalDetector* mfd = new G4MultiFunctionalDetector("phantom");
+//	G4SDManager::GetSDMpointer()->AddNewDetector(mfd);
+//	G4VPrimitiveScorer* scorer = new TETPSEnergyDeposit("edep", tetData);
+//	mfd->RegisterPrimitive(scorer);
+//	SetSensitiveDetector(lv_tet, mfd);
 }
 
 void ParallelPhantom::Deform(RotationList vQ, Vector3d root)
 {
-  tetData->Deform(vQ, root);
-  G4ThreeVector center = (tetData->GetPhantomBoxMax() + tetData->GetPhantomBoxMin())*0.5;
-  G4ThreeVector halfSize = (tetData->GetPhantomBoxMax() - tetData->GetPhantomBoxMin())*0.5 + G4ThreeVector(5., 5., 5.)*cm; //5-cm-margin
-  pv_doctor->SetTranslation(center);
-  dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetXHalfLength(halfSize.x());
-  dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetYHalfLength(halfSize.y());
-  dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetZHalfLength(halfSize.z());
- 	G4RunManager::GetRunManager()->GeometryHasBeenModified();
+	tetData->Deform(vQ, root);
+	G4ThreeVector center = (tetData->GetPhantomBoxMax() + tetData->GetPhantomBoxMin())*0.5;
+	G4ThreeVector halfSize = (tetData->GetPhantomBoxMax() - tetData->GetPhantomBoxMin())*0.5 + G4ThreeVector(5., 5., 5.)*cm; //5-cm-margin
+	pv_doctor->SetTranslation(center);
+	dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetXHalfLength(halfSize.x());
+	dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetYHalfLength(halfSize.y());
+	dynamic_cast<G4Box*>(pv_doctor->GetLogicalVolume()->GetSolid())->SetZHalfLength(halfSize.z());
+	G4RunManager::GetRunManager()->GeometryHasBeenModified();
 }

@@ -1,5 +1,6 @@
 #include "PhantomAnimator.hh"
 #include "G4SystemOfUnits.hh"
+
 PhantomAnimator::PhantomAnimator() {}
 PhantomAnimator::~PhantomAnimator() {}
 
@@ -98,11 +99,15 @@ void PhantomAnimator::PreparePhantom(string prefix) //there should be prefix.ply
     MatrixXd VT;
     MatrixXi FT, TT;
     igl::copyleft::tetgen::tetrahedralize(Vply, Fply, "pYq", VT, TT, FT);
+
     cout << "<Calculate Joint Weights>" << endl;
-    MatrixXd C1 = C.block(0, 0, C.rows() - 1, 3);
+    MatrixXd C1 = C.block(0, 0, C.rows() - 3, 3); // -3 ==> R/L eyes and head tip
+
     if (!CalculateScalingWeights(C1, VT, TT, Wj))
         exit(1);
+
     igl::normalize_row_sums(Wj, Wj);
+
     cout << "<Calculate Bone Weights>" << endl;
     MatrixXd bc;
     VectorXi B;
@@ -195,6 +200,7 @@ void PhantomAnimator::Animate(RotationList vQ, Vector3d root)
 
 bool PhantomAnimator::ReadProfileData(string fileName)
 {
+    cout << "Read profile data: " << fileName << endl;
     ifstream ifs(fileName);
     if (!ifs.is_open())
     {

@@ -74,6 +74,14 @@ public:
     virtual ~TETModelImport();
 
 	// get methods
+    G4bool        DoseWasOrganized()         { return doseOrganized; }
+    std::map<G4int, std::vector<G4int>>
+				  GetDoseMap()               { return organ2dose;}
+    G4String      GetDoseName(G4int doseID)  { return doseName[doseID];}
+	std::map<G4int, G4double> GetDoseMassMap(){ return doseMassMap; }
+
+
+
     G4String      GetPhantomName()           { return phantomName; }
 	G4Material*   GetMaterial(G4int idx)     { return materialMap[idx];}
 	size_t        GetNumTetrahedron()        { return tetVector.size();}
@@ -126,6 +134,11 @@ private:
 
 	G4ThreeVector boundingBox_Min;
 	G4ThreeVector boundingBox_Max;
+
+	std::map<G4int, std::vector<G4int>>   organ2dose;
+	std::map<G4int, G4String>  doseName;
+	std::map<G4int, G4double>  doseMassMap;
+	G4bool                     doseOrganized;
 
 	std::vector<G4Tet*>        tetVector;
 	std::vector<G4int>         materialVector;

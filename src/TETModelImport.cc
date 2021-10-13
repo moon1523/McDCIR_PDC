@@ -44,9 +44,13 @@ TETModelImport::TETModelImport(G4String _phantomName)
 	animator = new PhantomAnimator(phantomName);
 	// animator->CalibrateTo("S_Moon");
 	UpdateBBox();
-
 	ConstructTet();
-	// MaterialRead(materialFile);
+
+	DoseRead(doseFile);
+	MaterialRead(materialFile);
+	RBMBSRead(boneFile);
+	DRFRead(drfFile);
+
 	PrintMaterialInfomation();
 }
 
@@ -103,13 +107,37 @@ void TETModelImport::ConstructTet()
 		}
 	}
 
-		//for skin dist
-	for(G4int i : materialVector)
-	{
-		massMap[i] += 1.089 * (g/cm3) * volumeMap[i];
-	}
+	// 	//for skin dist
+	// for(G4int i : materialVector)
+	// {
+	// 	massMap[i] += 1.089 * (g/cm3) * volumeMap[i];
+	// }
 
 	G4cout<<"G4Tet construction done...degen#: "<<degenCount<<G4endl;
+}
+
+void TETModelImport::DoseRead(G4String doseFile){
+	//read dose file : PLEASE be careful not to include dose ID 0
+	std::ifstream ifs(doseFile);
+	if(!ifs.is_open()) return;
+	doseOrganized = true;
+
+	G4String aLine;
+	while(!ifs.eof()){
+		getline(ifs, aLine);
+		if(aLine.empty()) break;
+
+		std::stringstream ss(aLine);
+		G4int doseID; ss>>doseID;
+		G4String name; ss>>name; doseName[doseID] = name;
+		G4int organID;
+		while(ss>>organID){
+			if(organ2dose.find(organID)==organ2dose.end()) organ2dose[organID] = {doseID};
+			else	                                       organ2dose[organID].push_back(doseID);
+		}
+	}
+	ifs.close();
+
 }
 
 void TETModelImport::MaterialRead(G4String materialFile)
@@ -169,7 +197,6 @@ void TETModelImport::MaterialRead(G4String materialFile)
 
 	for(G4int i=0;i<(G4int)materialIndex.size();i++){
 		G4int idx = materialIndex[i];
-		if(idx==0) continue;
 		G4Material* mat = new G4Material(organNameMap[idx], densityMap[idx], G4int(materialIndexMap[idx].size()), kStateSolid, NTP_Temperature, STP_Pressure);
 		for(G4int j=0;j<G4int(materialIndexMap[idx].size());j++){
 			if(materialIndexMap[idx][j].first==1) mat->AddElement(elH, materialIndexMap[idx][j].second);
@@ -177,6 +204,17 @@ void TETModelImport::MaterialRead(G4String materialFile)
 		}
 		materialMap[idx]=mat;
 		massMap[idx]=densityMap[idx]*volumeMap[idx];
+	}
+
+	if(DoseWasOrganized()){
+		for(auto dm:doseName){
+			cout << dm.first << " " << dm.second << endl;
+			doseMassMap[dm.first] = 0;
+		}
+		for(auto od:organ2dose){
+			for(auto doseID:od.second)
+				doseMassMap[doseID] += massMap[od.first];
+		}
 	}
 }
 
@@ -287,27 +325,27 @@ void TETModelImport::PrintMaterialInfomation()
 	std::map<G4int, G4Material*>::iterator matIter;
 	G4cout<<std::setiosflags(std::ios::fixed);
 	G4cout.precision(3);
-	// for(matIter=materialMap.begin(); matIter!=materialMap.end();matIter++)
-	// {
-	// 	G4int idx = matIter->first;
-
-	// 	G4cout << std::setw(9)  << idx                         // organ ID
-	// 		   << std::setw(11) << numTetMap[idx]              // # of tetrahedrons
-	// 		   << std::setw(11) << volumeMap[idx]/cm3          // organ volume
-	// 		   << std::setw(11) << materialMap[idx]
-	// 		                       ->GetDensity()/(g/cm3)      // organ density
-	// 		   << std::setw(11) << massMap[idx]/g              // organ mass
-	// 		   << "\t"<<materialMap[idx]->GetName() << G4endl; // organ name
-	// }
-
-	for(auto iter:massMap)
+	for(matIter=materialMap.begin(); matIter!=materialMap.end();matIter++)
 	{
-		G4int idx = iter.first;
+		G4int idx = matIter->first;
+
 		G4cout << std::setw(9)  << idx                         // organ ID
 			   << std::setw(11) << numTetMap[idx]              // # of tetrahedrons
 			   << std::setw(11) << volumeMap[idx]/cm3          // organ volume
-			   << std::setw(11) << 1.089      // organ density
-			   << std::setw(11) << massMap[idx]/mg              // organ mass
-			   << "\tskin" << G4endl; // organ name 
+			   << std::setw(11) << materialMap[idx]
+								   ->GetDensity()/(g/cm3)      // organ density
+			   << std::setw(11) << massMap[idx]/g              // organ mass
+			   << "\t"<<materialMap[idx]->GetName() << G4endl; // organ name
 	}
+
+	// for(auto iter:massMap)
+	// {
+	// 	G4int idx = iter.first;
+	// 	G4cout << std::setw(9)  << idx                         // organ ID
+	// 		   << std::setw(11) << numTetMap[idx]              // # of tetrahedrons
+	// 		   << std::setw(11) << volumeMap[idx]/cm3          // organ volume
+	// 		   << std::setw(11) << 1.089      // organ density
+	// 		   << std::setw(11) << massMap[idx]/mg              // organ mass
+	// 		   << "\tskin" << G4endl; // organ name 
+	// }
 }
