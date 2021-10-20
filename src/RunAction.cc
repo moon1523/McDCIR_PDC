@@ -328,10 +328,10 @@ void RunAction::PrintResultByLine(std::ostream &out)
 	//
 	using namespace std;
 
-    out << 1 << "\t" <<numOfEvent<<"\t"<<2<<"\t"<<initTimer->GetRealElapsed() << "\t"<< runTimer->GetRealElapsed()<<"\t";
+	int count(31);
+    out << count++ << "\t" <<numOfEvent<<"\t"<<2<<"\t"<<initTimer->GetRealElapsed() << "\t"<< runTimer->GetRealElapsed()<<"\t";
 
 	for(auto itr:doses){
-		cout << "dosesID:" << itr.first << "\t" << itr.second.first/(joule/kg)*1e12 << endl;
         out << itr.second.first/(joule/kg)*1e12 <<"\t" << itr.second.second << "\t";
     }
     if(tetData->DoseWasOrganized()) {

@@ -39,6 +39,9 @@
 #include "G4SystemOfUnits.hh"
 #include "G4RunManager.hh"
 
+extern Vector3d ROOT;
+extern RotationList VQ;
+
 ParallelMessenger::ParallelMessenger(ParallelPhantom* _phantom)
 :G4UImessenger(), fPhantom(_phantom)
 {
@@ -46,12 +49,16 @@ ParallelMessenger::ParallelMessenger(ParallelPhantom* _phantom)
 	fDeformCmd = new G4UIcmdWithAnInteger("/phantom/frame", this);
 	fDataReadCmd = new G4UIcmdWithAString("/phantom/data", this);
 
+	fDeformSQLCmd = new G4UIcmdWithAnInteger("/phantom/frameSQL", this);
+
 }
 
 ParallelMessenger::~ParallelMessenger() {
 	delete fPhantomDir;
 	delete fDeformCmd; 
 	delete fDataReadCmd;
+
+	delete fDeformSQLCmd;
 }
 
 void ParallelMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
@@ -59,6 +66,11 @@ void ParallelMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
 	if(command == fDeformCmd){
 		G4int i = fDeformCmd->GetNewIntValue(newValue);
 		fPhantom->Deform(vQ_vec[i], roots[i]);
+	}
+	else if(command == fDeformSQLCmd) {
+		G4int i = fDeformSQLCmd->GetNewIntValue(newValue);
+		fPhantom->Deform(VQ, ROOT);
+
 	}
 	else if(command == fDataReadCmd){
 		ReadPostureData(newValue);

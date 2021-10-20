@@ -12,6 +12,16 @@
 #include <Eigen/Geometry>
 #include <igl/bbw.h>
 
+// MariaDB
+#include <mysql.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
+
 using namespace std;
 using namespace Eigen;
 
@@ -28,12 +38,20 @@ AngleAxisd GetRotMatrix(Vector3d from, Vector3d to);
 typedef
   std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond> >
   RotationList;
+typedef
+  std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> >
+  VectorList;
 void myDqs(
   const Eigen::MatrixXd & V,
   const std::vector<std::map<int, double>> & W,
   const RotationList & vQ,
   const std::vector<Vector3d> & vT,
   Eigen::MatrixXd & U);
+
+void finish_with_error(MYSQL* conn);
+string GetMyIPAddress();
+void Create_DB_TABLE(MYSQL* conn, string DB_TABLE);
+
 
 #endif
 

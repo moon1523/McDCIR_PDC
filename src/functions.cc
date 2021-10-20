@@ -254,6 +254,87 @@ void myDqs(
 
 }
 
+void finish_with_error(MYSQL* conn)
+{
+	// https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=xenostream&logNo=120197609525
+	cout << mysql_error(conn) << endl;
+	mysql_close(conn);
+	exit(1);
+}
+
+string GetMyIPAddress()
+{
+	// https://0x616b616d61.tistory.com/entry/Linux-%EC%8B%9C%EC%8A%A4%ED%85%9C%EC%84%9C%EB%B2%84-IP%EC%A3%BC%EC%86%8C-%EC%96%BB%EA%B8%B0
+	char myip[20];
+	int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+	const char* kGoogleDnsIp = "8.8.8.8";
+	int kDnsPort = 53;
+
+	struct sockaddr_in serv;
+	struct sockaddr_in host_name;
+
+	memset(&serv, 0, sizeof(serv));
+
+	serv.sin_family = AF_INET;
+	serv.sin_addr.s_addr = inet_addr(kGoogleDnsIp);
+	serv.sin_port = htons(kDnsPort);
+
+	if( connect(sockfd, (struct sockaddr *)&serv, sizeof(serv)) < 0 ) printf("[-] sock connect for get ipaddr faild!\n");
+
+	socklen_t host_len = sizeof(host_name);
+	if( getsockname(sockfd, (struct sockaddr *)&host_name, &host_len) < 0 ) printf("[-] getsockname faild!\n");
+
+	inet_ntop(AF_INET, &host_name.sin_addr, myip, sizeof(myip));
+	close(sockfd);
+
+	return string(myip);
+}
+
+void Create_DB_TABLE(MYSQL* conn, string DB_TABLE)
+{
+	string sql;
+
+	string doctor = "`Doc_x` DOUBLE NOT NULL,"
+			  	  	"`Doc_y` DOUBLE NOT NULL,"
+			        "`Doc_z` DOUBLE NOT NULL,";
+	for (int i=1; i<=22; i++) {
+		doctor += "`Doc_w" + to_string(i) + "` DOUBLE NOT NULL,"
+				  "`Doc_x" + to_string(i) + "` DOUBLE NOT NULL,"
+				  "`Doc_y" + to_string(i) + "` DOUBLE NOT NULL,"
+				  "`Doc_z" + to_string(i) + "` DOUBLE NOT NULL,";
+	}
+
+	sql = "CREATE TABLE `McDCIR_PDC`.`"+DB_TABLE+"` ("
+			  "`Number` INT(11) NOT NULL,"
+			  "`FrameNo` INT(11) NOT NULL,"
+			  "`Flag` TINYINT(4) NOT NULL,"
+			  "`IP` VARCHAR(15) NOT NULL,"
+			  + doctor +
+			  "PRIMARY KEY (`Number`));";
+	if (mysql_query(conn, sql.c_str()) == 1) {
+		finish_with_error(conn);
+	}
+	cout << "Create DB schema in SQL server: " + DB_TABLE << endl;
+
+	sql = "INSERT INTO `McDCIR_PDC`.`RECORD_MSH` (`Number`, `FrameNo`, `Flag`, `IP`, `Doc_x`, `Doc_y`, `Doc_z`, `Doc_w1`, `Doc_x1`, `Doc_y1`, `Doc_z1`, `Doc_w2`, `Doc_x2`, `Doc_y2`, `Doc_z2`, `Doc_w3`, `Doc_x3`, `Doc_y3`, `Doc_z3`, `Doc_w4`, `Doc_x4`, `Doc_y4`, `Doc_z4`, `Doc_w5`, `Doc_x5`, `Doc_y5`, `Doc_z5`, `Doc_w6`, `Doc_x6`, `Doc_y6`, `Doc_z6`, `Doc_w7`, `Doc_x7`, `Doc_y7`, `Doc_z7`, `Doc_w8`, `Doc_x8`, `Doc_y8`, `Doc_z8`, `Doc_w9`, `Doc_x9`, `Doc_y9`, `Doc_z9`, `Doc_w10`, `Doc_x10`, `Doc_y10`, `Doc_z10`, `Doc_w11`, `Doc_x11`, `Doc_y11`, `Doc_z11`, `Doc_w12`, `Doc_x12`, `Doc_y12`, `Doc_z12`, `Doc_w13`, `Doc_x13`, `Doc_y13`, `Doc_z13`, `Doc_w14`, `Doc_x14`, `Doc_y14`, `Doc_z14`, `Doc_w15`, `Doc_x15`, `Doc_y15`, `Doc_z15`, `Doc_w16`, `Doc_x16`, `Doc_y16`, `Doc_z16`, `Doc_w17`, `Doc_x17`, `Doc_y17`, `Doc_z17`, `Doc_w18`, `Doc_x18`, `Doc_y18`, `Doc_z18`, `Doc_w19`, `Doc_x19`, `Doc_y19`, `Doc_z19`, `Doc_w20`, `Doc_x20`, `Doc_y20`, `Doc_z20`, `Doc_w21`, `Doc_x21`, `Doc_y21`, `Doc_z21`, `Doc_w22`, `Doc_x22`, `Doc_y22`, `Doc_z22`) VALUES ('-1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0');";
+
+//	sql = "INSERT INTO `McDCIR_PDC`.`"+DB_TABLE+"` "
+//			"(`Number`, "
+//			"`FrameNo`, "
+//			"`Flag`, "
+//			"`IP`, "
+//			"`Table_x`, "
+//			"`Table_y`, "
+//			"`Table_z`, "
+//			"`Table_theta`) "
+//			"VALUES ('-1', '0', '0', '0', '0', '0', '0', '0');";
+	if (mysql_query(conn, sql.c_str()) == 1) {
+		finish_with_error(conn);
+	}
+	cout << "DB schema is initialized" << endl;
+}
+
 
 //void SkelTest(string fileName){
 //    ifstream ifs(fileName);
