@@ -29,9 +29,11 @@
 #define ActionInitialization_h 1
 
 #include "G4VUserActionInitialization.hh"
-#include "DetectorConstruction.hh"
 #include "G4Timer.hh"
+
+#include "DetectorConstruction.hh"
 #include "TETModelImport.hh"
+#include "TETSteppingAction.hh"
 
 class ActionInitialization : public G4VUserActionInitialization
 {

@@ -41,6 +41,7 @@
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 #include "G4PVParameterised.hh"
+
 #include "DetectorMessenger.hh"
 
 class DetectorConstruction : public G4VUserDetectorConstruction

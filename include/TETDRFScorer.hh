@@ -30,6 +30,7 @@
 
 #include "G4VPrimitiveScorer.hh"
 #include "G4THitsMap.hh"
+
 #include "TETModelImport.hh"
 
 class TETDRFScorer : public G4VPrimitiveScorer

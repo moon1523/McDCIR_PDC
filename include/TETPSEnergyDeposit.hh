@@ -32,6 +32,7 @@
 #define TETPSEnergyDeposit_h 1
 
 #include "G4PSEnergyDeposit.hh"
+
 #include "TETModelImport.hh"
 
 // *********************************************************************

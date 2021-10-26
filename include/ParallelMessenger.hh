@@ -32,6 +32,7 @@
 
 #include "globals.hh"
 #include "G4UImessenger.hh"
+
 #include "functions.h"
 
 class G4UIdirectory;

@@ -33,6 +33,7 @@
 
 #include "globals.hh"
 #include "G4UImessenger.hh"
+
 #include "PrimaryGeneratorAction.hh"
 
 class G4UIdirectory;

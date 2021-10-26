@@ -202,7 +202,7 @@ G4LogicalVolume* DetectorConstruction::ConstructPatient()
 		// 	exit(100);
 		// }
 		G4LogicalVolume* lv_tet = new G4LogicalVolume(tet, tissue, "tet");
-		new G4PVPlacement(0, G4ThreeVector(), lv_tet, "tet", lv_phantomBox, false, 0);
+		new G4PVPlacement(0, G4ThreeVector(), lv_tet, "tet", lv_phantomBox, false, 10000);
 		// lv_tet->SetVisAttributes(G4VisAttributes::GetInvisible());
 	}
 	ifsEle.close();

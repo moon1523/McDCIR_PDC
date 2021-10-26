@@ -23,40 +23,55 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// \author: Haegin Han
+// TETSteppingAction.cc
+// \file   MRCP_GEANT4/External/src/TETSteppingAction.cc
+// \author Haegin Han
 //
-#ifndef ParallelPhantom_h
-#define ParallelPhantom_h 1
 
-#include "G4VUserParallelWorld.hh"
-#include "globals.hh"
+#include "TETSteppingAction.hh"
+#include "G4Gamma.hh"
+#include "G4Electron.hh"
 
-#include "TETModelImport.hh"
+TETSteppingAction::TETSteppingAction()
+: G4UserSteppingAction(), kCarTolerance(1.0000000000000002e-07), stepCounter(0),
+  checkFlag(0)
+{}
 
-class G4LogicalVolume;
-class G4VPhysicalVolume;
-class ParallelMessenger;
+TETSteppingAction::~TETSteppingAction()
+{}
 
-class ParallelPhantom : public G4VUserParallelWorld
+void TETSteppingAction::UserSteppingAction(const G4Step* step)
 {
-public:
-  ParallelPhantom(G4String parallelWorldName, TETModelImport* _tetData);
-  virtual ~ParallelPhantom();
+	G4Track* theTrack = step->GetTrack();
+	G4int copy_num = theTrack->GetOriginTouchable()->GetVolume()->GetCopyNo();
+	const G4ParticleDefinition* particle = theTrack->GetDynamicParticle()->GetDefinition();
+	if (copy_num == 10000 && particle == G4Electron::ElectronDefinition() ) {
+		theTrack->SetTrackStatus(fStopAndKill);
+	}
 
-public:
-  virtual void Construct();
-  virtual void ConstructSD();
-  void Deform(RotationList vQ, Vector3d root);
 
-private:
-  G4bool fConstructed;
-  ParallelMessenger* messenger;
-
-  // Radiologist
-  TETModelImport*    tetData;
-  G4ThreeVector      doctor_translation;
-  G4LogicalVolume*   lv_tet;
-  G4VPhysicalVolume* pv_doctor;
-};
-
-#endif
+	// Slightly move the particle when the step length of five continuous steps is
+	// shorter than the tolerance (0.1 nm)
+	//
+	G4bool CheckingLength = (step->GetStepLength() < kCarTolerance);
+	if(CheckingLength)
+	{
+		++stepCounter;
+		if( checkFlag && stepCounter>=5 )
+		{
+			// kill the track if the particle is stuck even after the slight move
+			// (this hardly occurs)
+			theTrack->SetTrackStatus(fStopAndKill);
+			stepCounter=0;
+			checkFlag=0;
+		}
+		else if( stepCounter>=5 )
+		{
+			// if a particle is at the same position (step length < 0.1 nm) for five consecutive steps,
+			// slightly move (0.1 nm) the stuck particle in the direction of momentum
+			theTrack->SetPosition(theTrack->GetPosition() + theTrack->GetMomentumDirection()*kCarTolerance);
+			checkFlag=1;
+		}
+	}
+	else stepCounter=0;
+}

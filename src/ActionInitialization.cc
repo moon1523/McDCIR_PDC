@@ -50,4 +50,5 @@ void ActionInitialization::Build() const
 {
 	SetUserAction(new PrimaryGeneratorAction());
 	SetUserAction(new RunAction(tetData, output, initTimer));
+	SetUserAction(new TETSteppingAction);
 }

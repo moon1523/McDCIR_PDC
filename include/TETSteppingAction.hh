@@ -23,40 +23,43 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// \author: Haegin Han
+// TETSteppingAction.hh
+// \file   MRCP_GEANT4/External/include/TETSteppingAction.hh
+// \author Haegin Han
 //
-#ifndef ParallelPhantom_h
-#define ParallelPhantom_h 1
 
-#include "G4VUserParallelWorld.hh"
+#ifndef TETSteppingAction_h
+#define TETSteppingAction_h 1
+
+#include "G4UserSteppingAction.hh"
 #include "globals.hh"
-
-#include "TETModelImport.hh"
+#include "G4ThreeVector.hh"
+#include "G4Step.hh"
+#include "G4RunManager.hh"
+#include "G4UnitsTable.hh"
 
 class G4LogicalVolume;
-class G4VPhysicalVolume;
-class ParallelMessenger;
 
-class ParallelPhantom : public G4VUserParallelWorld
+// *********************************************************************
+// With very low probability, because of the internal bug of G4TET, the
+// particles can be stuck in the vertices of tetrahedrons. This
+// UserSteppingAction class was written to slightly move these stuck
+// particles.
+// -- UserSteppingAction: Slightly move the stuck particles.
+// *********************************************************************
+
+class TETSteppingAction : public G4UserSteppingAction
 {
-public:
-  ParallelPhantom(G4String parallelWorldName, TETModelImport* _tetData);
-  virtual ~ParallelPhantom();
+  public:
+    TETSteppingAction();
+    virtual ~TETSteppingAction();
 
-public:
-  virtual void Construct();
-  virtual void ConstructSD();
-  void Deform(RotationList vQ, Vector3d root);
+    virtual void UserSteppingAction(const G4Step*);
 
-private:
-  G4bool fConstructed;
-  ParallelMessenger* messenger;
-
-  // Radiologist
-  TETModelImport*    tetData;
-  G4ThreeVector      doctor_translation;
-  G4LogicalVolume*   lv_tet;
-  G4VPhysicalVolume* pv_doctor;
+  private:
+    G4double kCarTolerance;
+    G4int    stepCounter;
+    G4bool   checkFlag;
 };
 
 #endif

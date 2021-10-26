@@ -9,12 +9,12 @@ std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond> > VQ
 #include "G4UImanager.hh"
 #include "G4RunManagerFactory.hh"
 
-#include "DetectorConstruction.hh"
-#include "ParallelPhantom.hh"
+#include "include/DetectorConstruction.hh"
+#include "include/ParallelPhantom.hh"
 #include "FTFP_BERT.hh"
 #include "G4StepLimiterPhysics.hh"
 #include "G4ParallelWorldPhysics.hh"
-#include "ActionInitialization.hh"
+#include "include/ActionInitialization.hh"
 
 #include "G4Timer.hh"
 #include "G4VisExecutive.hh"
@@ -22,8 +22,8 @@ std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond> > VQ
 
 #include "Randomize.hh"
 
-#include "TETModelImport.hh"
-#include "PhantomAnimator.hh"
+#include "include/TETModelImport.hh"
+#include "include/PhantomAnimator.hh"
 
 
 int main(int argc, char** argv)

@@ -31,8 +31,6 @@
 #ifndef TETParameterisation_h
 #define TETParameterisation_h 1
 
-#include "TETModelImport.hh"
-
 #include "globals.hh"
 #include "G4VPVParameterisation.hh"
 #include "G4VSolid.hh"
@@ -40,6 +38,7 @@
 #include "G4VisAttributes.hh"
 
 #include <map>
+#include "TETModelImport.hh"
 
 class G4VPhysicalVolume;
 

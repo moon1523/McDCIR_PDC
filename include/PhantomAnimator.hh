@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <ctime>
-#include <functions.h>
 #include <functional>
 #include <iomanip>
 
@@ -32,6 +31,7 @@
 #include <Eigen/SparseCore>
 
 #include "G4GeometryTolerance.hh"
+#include "functions.h"
 
 class PhantomAnimator
 {
